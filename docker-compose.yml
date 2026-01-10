@@ -1,0 +1,11 @@
+services:
+  health-mcp:
+    image: ghcr.io/slavamilin/health-data-mcp:latest
+    container_name: health-mcp
+    ports:
+      - "3000:3000"
+    volumes:
+      - ~/mcp/data:/app/data
+    env_file:
+      - .env
+    restart: unless-stopped

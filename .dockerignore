@@ -1,0 +1,48 @@
+# Dependencies and logs
+node_modules
+npm-debug.log
+pnpm-debug.log
+
+# Git files
+.git
+.gitignore
+
+# IDE and editor files
+.cursor
+.claude
+.vscode
+*.swp
+*.swo
+*~
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Documentation
+*.md
+!README.md
+
+# Test files and configs
+tests
+*.test.js
+*.integration.test.js
+vitest.config.js
+vitest.integration.config.js
+
+# Build artifacts
+dist
+build
+*.log
+
+# Data and runtime files
+data
+
+# Docker files (not needed inside image)
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Deployment scripts
+deploy.sh
