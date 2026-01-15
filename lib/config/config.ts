@@ -1,6 +1,5 @@
 import "dotenv/config";
-import { fileURLToPath } from "url";
-import { dirname, resolve } from "path";
+import { DEFAULT_DB_PATH } from "../constants/paths.constants.ts";
 
 export interface Config {
   db: string;
@@ -15,14 +14,9 @@ export interface Config {
   };
 }
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const dbPath = resolve(__dirname, "..", "..", "data", "health_data.db");
-
 export const loadConfig = (): Config => {
   const config: Config = {
-    db: process.env.HEALTH_DB_PATH || dbPath,
+    db: process.env.HEALTH_DB_PATH || DEFAULT_DB_PATH,
     port: parseInt(process.env.PORT || "3000", 10),
     host: process.env.HOST || "0.0.0.0",
     baseUrl: process.env.BASE_URL || "http://localhost:3000",

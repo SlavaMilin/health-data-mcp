@@ -1,18 +1,14 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import Database from 'better-sqlite3';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import { existsSync } from 'fs';
 import { createHealthQueryRepository } from './repositories/health-query.repository.ts';
 import { createHealthQueryService } from './services/health-query.service.ts';
 import { createMcpToolsHandler } from './handlers/mcp-tools.handler.ts';
 import { registerMcpTools } from './routes/mcp-tools.routes.ts';
 import { registerMcpResources } from './routes/mcp-resources.routes.ts';
+import { DEFAULT_DB_PATH } from './constants/paths.constants.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const DB_PATH = process.env.HEALTH_DB_PATH || join(__dirname, '..', 'data', 'health_data.db');
+const DB_PATH = process.env.HEALTH_DB_PATH || DEFAULT_DB_PATH;
 
 export interface StdioServerDeps {
   db: Database.Database;
