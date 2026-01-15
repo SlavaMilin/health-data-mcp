@@ -6,62 +6,63 @@ import { createHealthQueryService } from './services/health-query.service.ts';
 import { createMcpToolsHandler } from './handlers/mcp-tools.handler.ts';
 import { registerMcpTools } from './routes/mcp-tools.routes.ts';
 import { registerMcpResources } from './routes/mcp-resources.routes.ts';
-import { DEFAULT_DB_PATH } from './constants/paths.constants.ts';
+import { createGoalsQueryRepository } from './repositories/goals-query.repository.ts';
+import { createGoalsDataRepository } from './repositories/goals-data.repository.ts';
+import { createGoalsService } from './services/goals.service.ts';
+import { createMcpGoalsHandler } from './handlers/mcp-goals.handler.ts';
+import { registerMcpGoalsTools } from './routes/mcp-goals.routes.ts';
+import { registerMcpGoalsResources } from './routes/mcp-goals-resources.routes.ts';
+import { runMigrations } from './infrastructure/migrations.ts';
+import { DEFAULT_DB_PATH, MIGRATIONS_DIR } from './constants/paths.constants.ts';
 
 const DB_PATH = process.env.HEALTH_DB_PATH || DEFAULT_DB_PATH;
 
-export interface StdioServerDeps {
-  db: Database.Database;
+export interface DatabaseConnections {
+  readDb: Database.Database;
+  writeDb: Database.Database;
 }
 
-export const connectDB = (): Database.Database => {
+export interface StdioServerDeps {
+  db?: DatabaseConnections;
+}
+
+export const connectDB = async (): Promise<DatabaseConnections> => {
   if (!existsSync(DB_PATH)) {
     throw new Error(`Database not found at ${DB_PATH}. Please run migration first.`);
   }
 
-  // Enable WAL mode first
   const writeDb = new Database(DB_PATH);
   writeDb.pragma('journal_mode = WAL');
-  writeDb.close();
+  await runMigrations(writeDb, MIGRATIONS_DIR);
 
-  // Return read-only connection
-  return new Database(DB_PATH, { readonly: true });
+  const readDb = new Database(DB_PATH, { readonly: true });
+
+  return { readDb, writeDb };
 };
 
-export const setupServer = (deps?: StdioServerDeps) => {
-  // ============================================================================
-  // 1. Create Database Connection (if not provided)
-  // ============================================================================
-  const db = deps?.db ?? connectDB();
+export const setupServer = async (deps?: StdioServerDeps) => {
+  const { readDb, writeDb } = deps?.db ?? (await connectDB());
 
-  // ============================================================================
-  // 2. Create Repository
-  // ============================================================================
-  const healthQueryRepo = createHealthQueryRepository(db);
-
-  // ============================================================================
-  // 3. Create Service
-  // ============================================================================
+  // Health query stack (read-only)
+  const healthQueryRepo = createHealthQueryRepository(readDb);
   const healthQueryService = createHealthQueryService(healthQueryRepo);
-
-  // ============================================================================
-  // 4. Create Handler
-  // ============================================================================
   const mcpToolsHandler = createMcpToolsHandler(healthQueryService);
 
-  // ============================================================================
-  // 5. Create MCP Server
-  // ============================================================================
+  // Goals stack (read + write)
+  const goalsQueryRepo = createGoalsQueryRepository(readDb);
+  const goalsDataRepo = createGoalsDataRepository(writeDb);
+  const goalsService = createGoalsService(goalsQueryRepo, goalsDataRepo);
+  const mcpGoalsHandler = createMcpGoalsHandler(goalsService);
+
   const server = new McpServer(
     { name: 'health-data-mcp', version: '1.0.0' },
     { capabilities: { tools: {}, resources: {} } },
   );
 
-  // ============================================================================
-  // 6. Register Tools and Resources
-  // ============================================================================
   registerMcpTools(server, mcpToolsHandler);
   registerMcpResources(server, mcpToolsHandler, DB_PATH);
+  registerMcpGoalsTools(server, mcpGoalsHandler);
+  registerMcpGoalsResources(server, mcpGoalsHandler);
 
   return server;
 };

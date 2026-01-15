@@ -56,7 +56,7 @@ export const createMcpTransportHandler = (
       logger.error({ error, sessionId: transport.sessionId }, "Transport error");
     };
 
-    const server = setupServer();
+    const server = await setupServer();
     await server.connect(transport);
     logger.info({ sessionId: transport.sessionId }, "MCP server connected");
 
