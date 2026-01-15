@@ -62,19 +62,24 @@ Config → Repositories → Services → Handlers → Routes
    - **NEVER** accept framework objects (request, reply)
 
 3. **Handlers** (`lib/handlers/*.handler.ts`)
-   - HTTP layer - handle request/response
-   - Accept FastifyRequest and FastifyReply
-   - Parse request data (body, query, params, headers)
-   - Call services with parsed data
-   - Format responses and handle HTTP errors
+   - Transport layer - handle request/response formatting
+   - **HTTP handlers**: Accept FastifyRequest and FastifyReply
+   - **MCP handlers**: Accept tool args, return McpToolResponse
+   - Parse request data, call services, format responses
    - Validation and error mapping
 
-4. **Routes** (`lib/routes/*.routes.ts`)
-   - Very thin layer - ONLY register routes
-   - Pass handlers to Fastify route methods
+4. **Schemas** (`lib/schemas/*.schemas.ts`)
+   - Zod schemas for validation
+   - Tool/endpoint descriptions and metadata
+   - Kept separate from routes for cleaner code
+
+5. **Routes** (`lib/routes/*.routes.ts`)
+   - Very thin layer - ONLY register routes/tools
+   - **HTTP routes**: `fastify.get('/path', handler)`
+   - **MCP routes**: `server.registerTool('name', schema, handler)`
    - No logic, no parsing, no formatting
 
-5. **Middleware** (`lib/middleware/*.middleware.ts`)
+6. **Middleware** (`lib/middleware/*.middleware.ts`)
    - Return factory functions for middleware
    - Injected dependencies via closures
 
@@ -122,17 +127,37 @@ All dependencies are wired together in `lib/http-server.ts` following this patte
 
 ## MCP Server Architecture
 
-The MCP server has two separate implementations:
+The MCP server has two transport modes, both following the layered architecture:
+
+### Transport Layer Analogy
+MCP is analogous to HTTP - both are transport layers with their own adapters:
+
+| HTTP (Fastify) | MCP (McpServer) |
+|----------------|-----------------|
+| `fastify.get()` | `server.registerTool()` |
+| HTTP handlers | MCP handlers |
+| HTTP routes | MCP routes |
 
 ### 1. Stdio Server (`lib/stdio-server.ts`)
-- Used for local MCP client connections
-- Implements health data query tools:
-  - `list_metric_types`: List all available health metrics
-  - `query_metrics`: Query metrics with filtering and aggregation
-  - `list_workout_types`: List workout types
-  - `execute_sql`: Run arbitrary SQL queries
-- Registers MCP resources (database schema, query patterns)
-- Reads from SQLite database in read-only mode
+Entry point for local MCP client connections. Follows the same DI pattern as HTTP server:
+
+```
+Database → Repository → Service → Handler → Routes → McpServer
+```
+
+Components:
+- `health-query.repository.ts` - SQL queries for health data
+- `health-query.service.ts` - Business logic (enrichment, aggregation)
+- `mcp-tools.handler.ts` - MCP response formatting
+- `mcp-tools.schemas.ts` - Zod schemas and descriptions
+- `mcp-tools.routes.ts` - Tool registration
+- `mcp-resources.routes.ts` - Resource registration
+
+Available tools:
+- `list_metric_types`: List all available health metrics
+- `query_metrics`: Query metrics with filtering and aggregation
+- `list_workout_types`: List workout types
+- `execute_sql`: Run arbitrary SQL queries
 
 ### 2. HTTP Server (`lib/http-server.ts`)
 - Used for remote deployment via SSE transport
@@ -198,12 +223,14 @@ Health data is imported from Auto Export iOS app JSON format:
 
 - `*.repository.ts` - Data access layer
 - `*.service.ts` - Business logic layer
-- `*.handler.ts` - HTTP request/response handlers
-- `*.routes.ts` - Route registration (thin layer)
+- `*.handler.ts` - Transport handlers (HTTP or MCP)
+- `*.schemas.ts` - Zod schemas and metadata
+- `*.routes.ts` - Route/tool registration (thin layer)
 - `*.middleware.ts` - Middleware factories
+- `*.constants.ts` - Constants and configuration
 - `*.types.ts` - TypeScript type definitions
-- `*.test.js` - Unit tests (no server)
-- `*.integration.test.js` - Integration tests (auto-start server)
+- `*.test.ts` - Unit tests (no server)
+- `*.integration.test.ts` - Integration tests (auto-start server)
 
 ## Development Workflow
 
@@ -215,7 +242,7 @@ Health data is imported from Auto Export iOS app JSON format:
 
 1. **New files**: Write tests immediately after creating any new file
    - ✅ Repositories, Services, Handlers, Middleware
-   - ❌ Skip only: Constants (`*.constants.ts`), Types (`*.types.ts`), Routes (`*.routes.ts` - too thin to test)
+   - ❌ Skip only: Constants, Types, Schemas, Routes (too thin to test)
 
 2. **Modified files**: Update or add tests when changing code
    - Modified functions/methods: Update existing tests
