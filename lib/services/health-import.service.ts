@@ -1,5 +1,5 @@
-import type { FastifyBaseLogger } from "fastify";
 import type { HealthDataRepository } from "../repositories/health-data.repository.ts";
+import type { Logger } from "../types/logger.types.ts";
 import type {
   HealthImportData,
   HealthImportResult,
@@ -51,7 +51,7 @@ const normalizeMetricsData = (json: HealthImportData): Record<string, HealthMetr
 
 export const createHealthImportService = (
   healthDataRepo: HealthDataRepository,
-  logger: FastifyBaseLogger
+  logger: Logger
 ): HealthImportService => {
   const migrateMetrics = (metricsData: Record<string, HealthMetricData>): number => {
     return healthDataRepo.transaction(() => {

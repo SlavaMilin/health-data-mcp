@@ -5,13 +5,9 @@ import Database from "better-sqlite3";
 import { createHealthDataRepository } from "./repositories/health-data.repository.ts";
 import { createHealthImportService } from "./services/health-import.service.ts";
 import { runMigrations } from "./infrastructure/migrations.ts";
+import { createConsoleLogger } from "./infrastructure/logger.ts";
 import { MIGRATIONS_DIR, DEFAULT_DB_PATH } from "./constants/paths.constants.ts";
 import type { HealthImportData, HealthImportResult } from "./types/health-data.types.ts";
-
-const logger = {
-  info: (msg: unknown, extra?: string) => console.log(extra || msg, extra ? msg : ""),
-  error: (msg: string) => console.error(msg),
-};
 
 export const runImport = async (
   jsonData: HealthImportData,
@@ -26,7 +22,7 @@ export const runImport = async (
   await runMigrations(db, MIGRATIONS_DIR);
 
   const repo = createHealthDataRepository(db);
-  const service = createHealthImportService(repo, logger as never);
+  const service = createHealthImportService(repo, createConsoleLogger());
 
   const result = await service.importHealthData(jsonData);
 

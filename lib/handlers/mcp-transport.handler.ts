@@ -2,9 +2,10 @@ import crypto from "crypto";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { setupServer } from "../stdio-server.ts";
-import type { FastifyBaseLogger, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyRequest, FastifyReply } from "fastify";
 import type { McpTransportsRepository } from "../repositories/mcp-transports.repository.ts";
 import type { JsonRpcRequest, JsonRpcError } from "../types/mcp.types.ts";
+import type { Logger } from "../types/logger.types.ts";
 
 export interface McpTransportHandler {
   createAndConnectTransport: () => Promise<{
@@ -28,7 +29,7 @@ export interface McpTransportHandler {
 
 export const createMcpTransportHandler = (
   transportsRepo: McpTransportsRepository,
-  logger: FastifyBaseLogger
+  logger: Logger
 ): McpTransportHandler => {
   const createJsonRpcError = (code: number, message: string, id: string | number | null = null): JsonRpcError => ({
     jsonrpc: "2.0",

@@ -1,8 +1,8 @@
 import crypto from "crypto";
 import type Keyv from "keyv";
-import type { FastifyBaseLogger } from "fastify";
 import type { Config } from "../config/config.ts";
 import type { ClientMetadata, OAuthSessionData } from "../types/oauth.types.ts";
+import type { Logger } from "../types/logger.types.ts";
 import type { KeyvRepository } from "../repositories/keyv.repository.ts";
 
 export interface OAuthService {
@@ -49,7 +49,7 @@ export const createOAuthService = (deps: {
   oauthClientsRepo: KeyvRepository<ClientMetadata>;
   mcpOAuthFlowsStore: Keyv;
   oauthSessionsRepo: KeyvRepository<OAuthSessionData>;
-  logger: FastifyBaseLogger;
+  logger: Logger;
 }): OAuthService => {
   const { config, oauthTokensRepo, oauthClientsRepo, mcpOAuthFlowsStore, oauthSessionsRepo, logger } = deps;
   return {
