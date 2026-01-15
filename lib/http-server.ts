@@ -14,7 +14,8 @@ import { createHealthDataRepository } from "./repositories/health-data.repositor
 import { KEYV_NAMESPACE, KEYV_TTL } from "./constants/keyv.constants.ts";
 import { createOAuthService } from "./services/oauth.service.ts";
 import { createHealthImportService } from "./services/health-import.service.ts";
-import { runServerMigrations } from "./db-migrations.ts";
+import { runMigrations } from "./infrastructure/migrations.ts";
+import { MIGRATIONS_DIR } from "./constants/paths.constants.ts";
 import { createMcpTransportHandler } from "./handlers/mcp-transport.handler.ts";
 import { createOAuthHandler } from "./handlers/oauth.handler.ts";
 import { createHealthImportHandler } from "./handlers/health-import.handler.ts";
@@ -54,7 +55,7 @@ export const createHttpServer = async () => {
   const db = new Database(config.db);
   db.pragma("journal_mode = WAL");
 
-  await runServerMigrations(db);
+  await runMigrations(db, MIGRATIONS_DIR);
 
   // ============================================================================
   // 5. Create Keyv Stores (shared KeyvSqlite instance)
@@ -106,7 +107,7 @@ export const createHttpServer = async () => {
     logger: fastify.log,
   });
 
-  const healthImportService = createHealthImportService(db, healthDataRepo, fastify.log);
+  const healthImportService = createHealthImportService(healthDataRepo, fastify.log);
 
   // ============================================================================
   // 8. Create Handlers

@@ -1,6 +1,5 @@
 import type { FastifyBaseLogger } from "fastify";
 import type { HealthDataRepository } from "../repositories/health-data.repository.ts";
-import type Database from "better-sqlite3";
 import type {
   HealthImportData,
   HealthImportResult,
@@ -8,7 +7,6 @@ import type {
   HealthMetricEntry,
   WorkoutEntry,
 } from "../types/health-data.types.ts";
-import { runHealthMigrations } from "../db-migrations.ts";
 
 export interface HealthImportService {
   importHealthData: (jsonData: HealthImportData) => Promise<HealthImportResult>;
@@ -52,7 +50,6 @@ const normalizeMetricsData = (json: HealthImportData): Record<string, HealthMetr
 };
 
 export const createHealthImportService = (
-  db: Database.Database,
   healthDataRepo: HealthDataRepository,
   logger: FastifyBaseLogger
 ): HealthImportService => {
@@ -134,8 +131,6 @@ export const createHealthImportService = (
   return {
     importHealthData: async (jsonData: HealthImportData) => {
       logger.info("Starting health data import");
-
-      await runHealthMigrations(db);
 
       const metricsData = normalizeMetricsData(jsonData);
       const workoutsData: WorkoutEntry[] = jsonData.data?.workouts || jsonData.workouts || [];

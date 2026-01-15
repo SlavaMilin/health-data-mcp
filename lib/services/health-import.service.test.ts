@@ -1,24 +1,15 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { FastifyBaseLogger } from 'fastify';
-import type Database from 'better-sqlite3';
 import { createHealthImportService, type HealthImportService } from './health-import.service.ts';
 import type { HealthDataRepository } from '../repositories/health-data.repository.ts';
 import type { HealthImportData } from '../types/health-data.types.ts';
-import * as dbMigrations from '../db-migrations.ts';
-
-vi.mock('../db-migrations.ts', () => ({
-  runHealthMigrations: vi.fn(),
-}));
 
 describe('HealthImportService', () => {
   let healthImportService: HealthImportService;
-  let mockDb: Database.Database;
   let mockRepo: HealthDataRepository;
   let mockLogger: FastifyBaseLogger;
 
   beforeEach(() => {
-    mockDb = {} as Database.Database;
-
     mockRepo = {
       insertMetricType: vi.fn(),
       updateMetricTypeSchema: vi.fn(),
@@ -41,18 +32,10 @@ describe('HealthImportService', () => {
       child: vi.fn(() => mockLogger),
     } as unknown as FastifyBaseLogger;
 
-    healthImportService = createHealthImportService(mockDb, mockRepo, mockLogger);
+    healthImportService = createHealthImportService(mockRepo, mockLogger);
   });
 
   describe('importHealthData', () => {
-    it('should run migrations before processing data', async () => {
-      const jsonData = { metrics: {}, workouts: [] };
-
-      await healthImportService.importHealthData(jsonData);
-
-      expect(dbMigrations.runHealthMigrations).toHaveBeenCalledWith(mockDb);
-    });
-
     it('should migrate metrics data', async () => {
       const jsonData = {
         metrics: {

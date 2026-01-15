@@ -83,6 +83,11 @@ Config → Repositories → Services → Handlers → Routes
    - Return factory functions for middleware
    - Injected dependencies via closures
 
+7. **Infrastructure** (`lib/infrastructure/*.ts`)
+   - Low-level utilities (database migrations, etc.)
+   - Not business logic, not services
+   - Simple functions with explicit dependencies
+
 ### Key Architectural Patterns
 
 #### Factory Functions (NO Classes)
@@ -211,7 +216,7 @@ Each metric/workout type has a `schema` field containing a JSON array of field n
 ### Schema Migrations
 Database schema migrations are managed through:
 - SQL migration files in `migrations/*.sql`
-- `createDbMigrationsService()` for running schema migrations
+- `runMigrations()` from `lib/infrastructure/migrations.ts` for running schema migrations
 
 ### Health Data Import
 Health data is imported from Auto Export iOS app JSON format:
@@ -275,6 +280,7 @@ Before completing ANY task:
 2. ✅ Run `pnpm typecheck` - MUST pass
 3. ✅ Run `pnpm test` - MUST pass
 4. ✅ If integration tests affected, run `pnpm test:integration`
+5. ✅ Check if CLAUDE.md needs updating (new patterns, renamed functions, new folders, etc.)
 
 #### Example Workflow
 

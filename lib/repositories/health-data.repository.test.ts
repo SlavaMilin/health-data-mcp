@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
 import { createHealthDataRepository, type HealthDataRepository } from './health-data.repository.ts';
-import { runHealthMigrations } from '../db-migrations.ts';
+import { runMigrations } from '../infrastructure/migrations.ts';
+import { MIGRATIONS_DIR } from '../constants/paths.constants.ts';
 import type {
   MetricTypeRow,
   HealthMetricRow,
@@ -18,7 +19,7 @@ describe('HealthDataRepository', () => {
     db = new Database(':memory:');
     db.pragma('journal_mode = WAL');
 
-    await runHealthMigrations(db);
+    await runMigrations(db, MIGRATIONS_DIR);
 
     repo = createHealthDataRepository(db);
   });

@@ -6,7 +6,8 @@ import { Command } from "commander";
 import Database from "better-sqlite3";
 import { createHealthDataRepository } from "../lib/repositories/health-data.repository.ts";
 import { createHealthImportService } from "../lib/services/health-import.service.ts";
-import { runHealthMigrations } from "../lib/db-migrations.ts";
+import { runMigrations } from "../lib/infrastructure/migrations.ts";
+import { MIGRATIONS_DIR } from "../lib/constants/paths.constants.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const defaultDbPath = resolve(__dirname, "..", "data", "health_data.db");
@@ -35,9 +36,11 @@ const program = new Command()
 
     const jsonData = JSON.parse(readFileSync(jsonPath, "utf-8"));
     const db = new Database(dbPath);
-    await runHealthMigrations(db);
+
+    await runMigrations(db, MIGRATIONS_DIR);
+
     const repo = createHealthDataRepository(db);
-    const service = createHealthImportService(db, repo, logger as any);
+    const service = createHealthImportService(repo, logger as any);
 
     const result = await service.importHealthData(jsonData);
 
