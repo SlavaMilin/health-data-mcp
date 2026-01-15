@@ -1,12 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createMcpToolsHandler, type McpToolsHandler } from './mcp-tools.handler.ts';
 import type { HealthQueryService } from '../services/health-query.service.ts';
-import type { HealthQueryRepository } from '../repositories/health-query.repository.ts';
 
 describe('McpToolsHandler', () => {
   let handler: McpToolsHandler;
   let mockService: HealthQueryService;
-  let mockRepo: HealthQueryRepository;
 
   beforeEach(() => {
     mockService = {
@@ -18,24 +16,13 @@ describe('McpToolsHandler', () => {
         { name: 'Running', schema: ['name', 'duration'], count: 50, date_range: null },
       ]),
       executeSQL: vi.fn(() => ({ results: [{ result: 42 }] })),
-    };
-
-    mockRepo = {
-      getMetricTypes: vi.fn(),
-      getMetricMetadata: vi.fn(),
-      getMetricExample: vi.fn(),
-      getWorkoutTypes: vi.fn(),
-      getWorkoutMetadata: vi.fn(),
-      queryMetricsRaw: vi.fn(),
-      queryMetricsAggregated: vi.fn(),
-      executeSQL: vi.fn(),
       getSchemaInfo: vi.fn(() => ({
         tables: [{ name: 'metric_types', sql: 'CREATE TABLE...' }],
         views: [{ name: 'metrics_with_types', sql: 'CREATE VIEW...' }],
       })),
     };
 
-    handler = createMcpToolsHandler(mockService, mockRepo);
+    handler = createMcpToolsHandler(mockService);
   });
 
   describe('queryMetrics', () => {

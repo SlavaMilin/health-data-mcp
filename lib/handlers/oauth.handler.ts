@@ -1,6 +1,6 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import type { OAuthService } from "../services/oauth.service.ts";
-import type { ClientMetadata, TokenResponse, OAuthErrorResponse } from "../types/oauth.types.ts";
+import type { ClientMetadata, TokenResponse, OAuthErrorResponse, OAuthServerMetadata, OAuthProtectedResourceMetadata } from "../types/oauth.types.ts";
 import {
   registerClientSchema,
   authorizeQuerySchema,
@@ -14,12 +14,43 @@ export interface OAuthHandler {
   handleMcpAuthorize: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   handleCallback: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   handleTokenExchange: (request: FastifyRequest, reply: FastifyReply) => Promise<TokenResponse | OAuthErrorResponse>;
+  handleAuthServerMetadata: () => OAuthServerMetadata;
+  handleProtectedResourceMetadata: () => OAuthProtectedResourceMetadata;
+  handleSseProtectedResourceMetadata: () => OAuthProtectedResourceMetadata;
 }
 
-export const createOAuthHandler = (
-  oauthService: OAuthService
-): OAuthHandler => {
+interface OAuthHandlerDeps {
+  oauthService: OAuthService;
+  baseUrl: string;
+}
+
+export const createOAuthHandler = (deps: OAuthHandlerDeps): OAuthHandler => {
+  const { oauthService, baseUrl } = deps;
+
   return {
+    handleAuthServerMetadata: () => ({
+      issuer: baseUrl,
+      authorization_endpoint: `${baseUrl}/mcp/authorize`,
+      token_endpoint: `${baseUrl}/oauth/token`,
+      registration_endpoint: `${baseUrl}/oauth/register`,
+      response_types_supported: ["code"],
+      grant_types_supported: ["authorization_code", "refresh_token"],
+      code_challenge_methods_supported: ["S256"],
+      token_endpoint_auth_methods_supported: ["none"],
+    }),
+
+    handleProtectedResourceMetadata: () => ({
+      resource: baseUrl,
+      authorization_servers: [baseUrl],
+      ...oauthService.getMetadata(),
+    }),
+
+    handleSseProtectedResourceMetadata: () => ({
+      resource: `${baseUrl}/sse`,
+      authorization_servers: [baseUrl],
+      ...oauthService.getMetadata(),
+    }),
+
     handleRegisterClient: async (request: FastifyRequest, reply: FastifyReply) => {
       const parseResult = registerClientSchema.safeParse(request.body);
       if (!parseResult.success) {

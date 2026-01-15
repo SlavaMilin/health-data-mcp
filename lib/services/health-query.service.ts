@@ -5,6 +5,7 @@ import type {
   EnrichedWorkoutType,
   MetricTypeRow,
   WorkoutTypeRow,
+  SchemaInfo,
 } from '../types/health-query.types.ts';
 
 export interface HealthQueryService {
@@ -12,6 +13,7 @@ export interface HealthQueryService {
   listMetricTypes: () => EnrichedMetricType[];
   listWorkoutTypes: () => EnrichedWorkoutType[];
   executeSQL: (query: string) => { results?: unknown[]; error?: string };
+  getSchemaInfo: () => SchemaInfo;
 }
 
 export const createHealthQueryService = (
@@ -76,5 +78,7 @@ export const createHealthQueryService = (
         return { error: (error as Error).message };
       }
     },
+
+    getSchemaInfo: () => healthQueryRepo.getSchemaInfo(),
   };
 };

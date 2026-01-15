@@ -113,7 +113,10 @@ export const createHttpServer = async () => {
   // 8. Create Handlers
   // ============================================================================
   const mcpTransportHandler = createMcpTransportHandler(transportsRepo, fastify.log);
-  const oauthHandler = createOAuthHandler(oauthService);
+  const oauthHandler = createOAuthHandler({
+    oauthService,
+    baseUrl: config.baseUrl,
+  });
   const healthImportHandler = createHealthImportHandler(healthImportService);
 
   // ============================================================================
@@ -133,7 +136,9 @@ export const createHttpServer = async () => {
   // ============================================================================
   registerHealthRoutes(fastify);
   registerMcpRoutes(fastify, mcpTransportHandler);
-  registerOAuthRoutes(fastify, oauthHandler, oauthService, config);
+  registerOAuthRoutes(fastify, oauthHandler, {
+    enableCallback: Boolean(config.github.clientId && config.github.clientSecret),
+  });
   registerHealthImportRoutes(fastify, healthImportHandler);
 
   // ============================================================================

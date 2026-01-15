@@ -47,7 +47,7 @@ export const setupServer = (deps?: StdioServerDeps) => {
   // ============================================================================
   // 4. Create Handler
   // ============================================================================
-  const mcpToolsHandler = createMcpToolsHandler(healthQueryService, healthQueryRepo);
+  const mcpToolsHandler = createMcpToolsHandler(healthQueryService);
 
   // ============================================================================
   // 5. Create MCP Server

@@ -1,19 +1,18 @@
 import type { HealthQueryService } from '../services/health-query.service.ts';
-import type { HealthQueryRepository } from '../repositories/health-query.repository.ts';
-import type { McpToolResponse, QueryMetricsParams } from '../types/health-query.types.ts';
+import type { McpToolResponse, QueryMetricsParams, SchemaInfo } from '../types/health-query.types.ts';
 import { QUERY_PATTERNS, SCHEMA_USAGE } from '../constants/query-patterns.constants.ts';
+
+export interface SchemaResourceResponse extends SchemaInfo {
+  query_patterns: typeof QUERY_PATTERNS;
+  how_to_use_schema: typeof SCHEMA_USAGE;
+}
 
 export interface McpToolsHandler {
   queryMetrics: (args: QueryMetricsParams) => McpToolResponse;
   listMetricTypes: () => McpToolResponse;
   listWorkoutTypes: () => McpToolResponse;
   executeSQL: (args: { query: string }) => McpToolResponse;
-  getSchemaResource: () => {
-    tables: unknown[];
-    views: unknown[];
-    query_patterns: typeof QUERY_PATTERNS;
-    how_to_use_schema: typeof SCHEMA_USAGE;
-  };
+  getSchemaResource: () => SchemaResourceResponse;
 }
 
 const textResponse = (data: unknown): McpToolResponse => ({
@@ -27,7 +26,6 @@ const errorResponse = (error: string, hint?: string): McpToolResponse => ({
 
 export const createMcpToolsHandler = (
   healthQueryService: HealthQueryService,
-  healthQueryRepo: HealthQueryRepository,
 ): McpToolsHandler => {
   return {
     queryMetrics: (args) => {
@@ -71,13 +69,10 @@ export const createMcpToolsHandler = (
       return textResponse(result.results);
     },
 
-    getSchemaResource: () => {
-      const schemaInfo = healthQueryRepo.getSchemaInfo();
-      return {
-        ...schemaInfo,
-        query_patterns: QUERY_PATTERNS,
-        how_to_use_schema: SCHEMA_USAGE,
-      };
-    },
+    getSchemaResource: () => ({
+      ...healthQueryService.getSchemaInfo(),
+      query_patterns: QUERY_PATTERNS,
+      how_to_use_schema: SCHEMA_USAGE,
+    }),
   };
 };

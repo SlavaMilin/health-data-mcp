@@ -14,14 +14,11 @@ export interface McpTransportHandler {
   }>;
 
   handlePost: (
-    sessionId: string | undefined,
-    body: JsonRpcRequest | JsonRpcRequest[],
-    request: FastifyRequest,
+    request: FastifyRequest<{ Body: JsonRpcRequest | JsonRpcRequest[] }>,
     reply: FastifyReply
   ) => Promise<void>;
 
   handleGet: (
-    sessionId: string,
     request: FastifyRequest,
     reply: FastifyReply
   ) => Promise<void>;
@@ -37,44 +34,47 @@ export const createMcpTransportHandler = (
     id,
   });
 
+  // Extract as closure function to avoid recursive handler creation
+  const createAndConnectTransport = async () => {
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => crypto.randomUUID(),
+      onsessioninitialized: (sessionId: string) => {
+        logger.info({ sessionId }, "Session initialized");
+        transportsRepo.set(sessionId, transport);
+      },
+    });
+
+    transport.onclose = () => {
+      const sessionId = transport.sessionId;
+      if (sessionId && transportsRepo.has(sessionId)) {
+        logger.info({ sessionId }, "Transport closed");
+        transportsRepo.delete(sessionId);
+      }
+    };
+
+    transport.onerror = (error: Error) => {
+      logger.error({ error, sessionId: transport.sessionId }, "Transport error");
+    };
+
+    const server = setupServer();
+    await server.connect(transport);
+    logger.info({ sessionId: transport.sessionId }, "MCP server connected");
+
+    return {
+      transport,
+      sessionId: transport.sessionId!,
+    };
+  };
+
   return {
-    createAndConnectTransport: async () => {
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => crypto.randomUUID(),
-        onsessioninitialized: (sessionId: string) => {
-          logger.info({ sessionId }, "Session initialized");
-          transportsRepo.set(sessionId, transport);
-        },
-      });
-
-      transport.onclose = () => {
-        const sessionId = transport.sessionId;
-        if (sessionId && transportsRepo.has(sessionId)) {
-          logger.info({ sessionId }, "Transport closed");
-          transportsRepo.delete(sessionId);
-        }
-      };
-
-      transport.onerror = (error: Error) => {
-        logger.error({ error, sessionId: transport.sessionId }, "Transport error");
-      };
-
-      const server = setupServer();
-      await server.connect(transport);
-      logger.info({ sessionId: transport.sessionId }, "MCP server connected");
-
-      return {
-        transport,
-        sessionId: transport.sessionId!,
-      };
-    },
+    createAndConnectTransport,
 
     handlePost: async (
-      sessionId: string | undefined,
-      body: JsonRpcRequest | JsonRpcRequest[],
-      request: FastifyRequest,
+      request: FastifyRequest<{ Body: JsonRpcRequest | JsonRpcRequest[] }>,
       reply: FastifyReply
     ) => {
+      const sessionId = request.headers["mcp-session-id"] as string | undefined;
+      const body = request.body;
       const isInitRequest = body && isInitializeRequest(body);
 
       logger.info({ sessionId, isInitRequest }, "MCP POST request");
@@ -89,7 +89,7 @@ export const createMcpTransportHandler = (
 
         // Create new transport for initialization requests
         if (!sessionId && isInitRequest) {
-          const { transport } = await createMcpTransportHandler(transportsRepo, logger).createAndConnectTransport();
+          const { transport } = await createAndConnectTransport();
           await transport.handleRequest(request.raw, reply.raw, body);
           return;
         }
@@ -109,11 +109,9 @@ export const createMcpTransportHandler = (
       }
     },
 
-    handleGet: async (
-      sessionId: string,
-      request: FastifyRequest,
-      reply: FastifyReply
-    ) => {
+    handleGet: async (request: FastifyRequest, reply: FastifyReply) => {
+      const sessionId = request.headers["mcp-session-id"] as string | undefined;
+
       if (!sessionId || !transportsRepo.has(sessionId)) {
         logger.warn({ sessionId }, "Invalid session for SSE stream");
         return reply.code(400).send("Invalid or missing session ID");
