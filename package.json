@@ -48,8 +48,9 @@
     "zod": "4.3.4"
   },
   "bin": {
-    "import-health": "./bin/import-health.ts",
-    "health-data-mcp": "./bin/stdio.ts"
+    "health-data-mcp": "./bin/stdio.js",
+    "health-data-server": "./bin/server.js",
+    "import-health": "./bin/import-health.js"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
