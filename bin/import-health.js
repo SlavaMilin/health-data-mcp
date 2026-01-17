@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const child = spawn('node', ['--import', 'tsx', join(__dirname, 'import-health.ts')], {
+const child = spawn('node', ['--import', 'tsx', join(__dirname, 'import-health.ts'), ...process.argv.slice(2)], {
   stdio: 'inherit',
   env: process.env,
 });
