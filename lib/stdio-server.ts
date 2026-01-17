@@ -1,5 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import Database from 'better-sqlite3';
+import { mkdirSync } from 'fs';
+import { dirname } from 'path';
 import { createHealthQueryRepository } from './repositories/health-query.repository.ts';
 import { createHealthQueryService } from './services/health-query.service.ts';
 import { createMcpToolsHandler } from './handlers/mcp-tools.handler.ts';
@@ -26,6 +28,7 @@ export interface StdioServerDeps {
 }
 
 export const connectDB = async (): Promise<DatabaseConnections> => {
+  mkdirSync(dirname(DB_PATH), { recursive: true });
   const writeDb = new Database(DB_PATH);
   writeDb.pragma('journal_mode = WAL');
   await runMigrations(writeDb, MIGRATIONS_DIR);
