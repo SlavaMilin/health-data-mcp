@@ -13,31 +13,31 @@ Health data is imported from [Auto Export](https://www.healthexportapp.com/) iOS
 
 ## Local Use
 
-### 1. Install and import data
+### 1. Import data
 
 ```bash
-pnpm install
-pnpm import-health ./export.json
+npx --yes --package=github:SlavaMilin/health-data-mcp import-health ./export.json -o ~/.health-data/health.db
 ```
 
-### 2. Configure Claude Desktop
+### 2. Configure MCP client
 
-Add to `.mcp.json`:
+Add to Claude Desktop config (`~/.claude/claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "health-data": {
-      "type": "stdio",
-      "command": "pnpm",
-      "args": ["--dir", "/path/to/this/project", "start"],
+      "command": "npx",
+      "args": ["--yes", "github:SlavaMilin/health-data-mcp"],
       "env": {
-        "HEALTH_DB_PATH": "/path/to/health_data.db"
+        "HEALTH_DB_PATH": "/Users/YOUR_USERNAME/.health-data/health.db"
       }
     }
   }
 }
 ```
+
+**Note:** `HEALTH_DB_PATH` is required. Use the same path for import and server.
 
 ## Server Deployment
 
