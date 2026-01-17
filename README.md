@@ -10,6 +10,7 @@ Health data is imported from [Auto Export](https://www.healthexportapp.com/) iOS
 - Query workouts
 - Execute SQL queries
 - Aggregation and date filtering
+- Health goals tracking
 
 ## Local Use
 
@@ -80,6 +81,10 @@ docker run -d \
 | `list_workout_types` | List workout types |
 | `query_metrics` | Query metrics with filtering |
 | `execute_sql` | Run SQL queries |
+| `create_goal` | Create a health goal |
+| `update_goal` | Update or archive a goal |
+| `list_goals` | List goals by status |
+| `get_goal` | Get goal details |
 
 ## License
 
