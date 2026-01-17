@@ -1,6 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import Database from 'better-sqlite3';
-import { existsSync } from 'fs';
 import { createHealthQueryRepository } from './repositories/health-query.repository.ts';
 import { createHealthQueryService } from './services/health-query.service.ts';
 import { createMcpToolsHandler } from './handlers/mcp-tools.handler.ts';
@@ -27,10 +26,6 @@ export interface StdioServerDeps {
 }
 
 export const connectDB = async (): Promise<DatabaseConnections> => {
-  if (!existsSync(DB_PATH)) {
-    throw new Error(`Database not found at ${DB_PATH}. Please run migration first.`);
-  }
-
   const writeDb = new Database(DB_PATH);
   writeDb.pragma('journal_mode = WAL');
   await runMigrations(writeDb, MIGRATIONS_DIR);
