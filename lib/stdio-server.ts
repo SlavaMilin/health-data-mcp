@@ -14,13 +14,14 @@ import { createMcpGoalsHandler } from './handlers/mcp-goals.handler.ts';
 import { registerMcpGoalsTools } from './routes/mcp-goals.routes.ts';
 import { registerMcpGoalsResources } from './routes/mcp-goals-resources.routes.ts';
 import { runMigrations } from './infrastructure/migrations.ts';
-import { DEFAULT_DB_PATH, MIGRATIONS_DIR } from './constants/paths.constants.ts';
+import { MIGRATIONS_DIR } from './constants/paths.constants.ts';
 
-const DB_PATH = process.env.HEALTH_DB_PATH || DEFAULT_DB_PATH;
+const DB_PATH = process.env.HEALTH_DB_PATH;
 
 export interface DatabaseConnections {
   readDb: Database.Database;
   writeDb: Database.Database;
+  dbPath: string;
 }
 
 export interface StdioServerDeps {
@@ -28,6 +29,13 @@ export interface StdioServerDeps {
 }
 
 export const connectDB = async (): Promise<DatabaseConnections> => {
+  if (!DB_PATH) {
+    throw new Error(
+      'HEALTH_DB_PATH environment variable is required. ' +
+        'Set it to the path where you want to store the database, e.g. HEALTH_DB_PATH=~/.health-data/health.db',
+    );
+  }
+
   mkdirSync(dirname(DB_PATH), { recursive: true });
   const writeDb = new Database(DB_PATH);
   writeDb.pragma('journal_mode = WAL');
@@ -35,11 +43,11 @@ export const connectDB = async (): Promise<DatabaseConnections> => {
 
   const readDb = new Database(DB_PATH, { readonly: true });
 
-  return { readDb, writeDb };
+  return { readDb, writeDb, dbPath: DB_PATH };
 };
 
 export const setupServer = async (deps?: StdioServerDeps) => {
-  const { readDb, writeDb } = deps?.db ?? (await connectDB());
+  const { readDb, writeDb, dbPath } = deps?.db ?? (await connectDB());
 
   // Health query stack (read-only)
   const healthQueryRepo = createHealthQueryRepository(readDb);
@@ -58,7 +66,7 @@ export const setupServer = async (deps?: StdioServerDeps) => {
   );
 
   registerMcpTools(server, mcpToolsHandler);
-  registerMcpResources(server, mcpToolsHandler, DB_PATH);
+  registerMcpResources(server, mcpToolsHandler, dbPath);
   registerMcpGoalsTools(server, mcpGoalsHandler);
   registerMcpGoalsResources(server, mcpGoalsHandler);
 
