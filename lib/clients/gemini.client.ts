@@ -4,7 +4,14 @@ import { createConsoleLogger } from "../infrastructure/logger.ts";
 
 const logger = createConsoleLogger();
 
-const GEMINI_MODEL = "gemini-2.5-flash";
+export const GeminiModel = {
+  PRO: "gemini-2.5-pro",
+  FLASH: "gemini-2.5-flash",
+} as const;
+
+export type GeminiModelType = (typeof GeminiModel)[keyof typeof GeminiModel];
+
+const GEMINI_MODEL: GeminiModelType = GeminiModel.FLASH;
 const MAX_OUTPUT_TOKENS = 16384;
 
 export const createGeminiClient = (config: GeminiClientConfig): GeminiClient => {
@@ -24,10 +31,18 @@ export const createGeminiClient = (config: GeminiClientConfig): GeminiClient => 
         },
       });
 
-      // Collect text from all AFC turns, not just the final response
+      // Flash model: simple response.text
+      if (GEMINI_MODEL === GeminiModel.FLASH) {
+        logger.info(
+          { model: GEMINI_MODEL, textLength: response.text?.length ?? 0 },
+          "Gemini Flash response"
+        );
+        return response.text ?? "";
+      }
+
+      // Pro model: collect text from all AFC turns
       const allTextParts: string[] = [];
 
-      // Extract text from AFC history (intermediate turns)
       const afcHistory = response.automaticFunctionCallingHistory;
       if (afcHistory) {
         logger.info({ historyLength: afcHistory.length }, "AFC history turns");
@@ -46,7 +61,6 @@ export const createGeminiClient = (config: GeminiClientConfig): GeminiClient => 
         }
       }
 
-      // Add text from final response
       if (response.text) {
         allTextParts.push(response.text);
         logger.info(
