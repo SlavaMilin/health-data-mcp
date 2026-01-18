@@ -28,9 +28,10 @@ export const createHealthAnalysisService = ({
 }: HealthAnalysisServiceDeps): HealthAnalysisService => ({
   run: async (type = ANALYSIS_TYPE.WEEKLY) => {
     const systemPrompt = instructionsRepo.get();
-    const { date, periodStart, periodEnd } = calculatePeriodDate(type);
+    const { date, periodStart, periodEnd, today } = calculatePeriodDate(type);
 
     const userMessage = `
+Today: ${today}
 Analyze my health data.
 Period: ${periodStart} to ${periodEnd}
 Type: ${type}

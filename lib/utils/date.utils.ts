@@ -5,6 +5,7 @@ export interface PeriodInfo {
   date: string;
   periodStart: string;
   periodEnd: string;
+  today: string;
 }
 
 const formatDate = (d: Date): string => {
@@ -22,12 +23,13 @@ const formatDate = (d: Date): string => {
  */
 export const calculatePeriodDate = (type: AnalysisType): PeriodInfo => {
   const now = new Date();
+  const today = formatDate(now);
 
   if (type === ANALYSIS_TYPE.DAILY) {
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
     const date = formatDate(yesterday);
-    return { date, periodStart: date, periodEnd: date };
+    return { date, periodStart: date, periodEnd: date, today };
   }
 
   if (type === ANALYSIS_TYPE.WEEKLY) {
@@ -41,7 +43,7 @@ export const calculatePeriodDate = (type: AnalysisType): PeriodInfo => {
     periodStartDate.setDate(periodStartDate.getDate() - 6);
     const periodStart = formatDate(periodStartDate);
 
-    return { date: periodEnd, periodStart, periodEnd };
+    return { date: periodEnd, periodStart, periodEnd, today };
   }
 
   const lastDayPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
@@ -50,5 +52,5 @@ export const calculatePeriodDate = (type: AnalysisType): PeriodInfo => {
   const firstDayPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const periodStart = formatDate(firstDayPrevMonth);
 
-  return { date: periodEnd, periodStart, periodEnd };
+  return { date: periodEnd, periodStart, periodEnd, today };
 };
