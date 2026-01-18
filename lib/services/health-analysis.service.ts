@@ -35,7 +35,11 @@ Today: ${today}
 Analyze my health data.
 Period: ${periodStart} to ${periodEnd}
 Type: ${type}
-Format: Telegram Markdown
+
+Format: Telegram Markdown (CRITICAL - invalid markdown = message won't be delivered)
+- Lists: use • or -, NEVER *
+- *bold* and _italic_ — always close tags
+- No nested formatting
     `.trim();
 
     const analysis = await geminiClient.analyze({

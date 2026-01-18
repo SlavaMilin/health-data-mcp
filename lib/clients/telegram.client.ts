@@ -12,17 +12,18 @@ interface TelegramResponse {
 
 export const createTelegramClient = (
   config: TelegramClientConfig
-): TelegramClient => ({
-  sendMessage: async (text) => {
+): TelegramClient => {
+  const send = async (text: string, parseMode?: string) => {
     const url = `${TELEGRAM_API_BASE}/bot${config.botToken}/sendMessage`;
+    const body: Record<string, string> = { chat_id: config.chatId, text };
+    if (parseMode) {
+      body.parse_mode = parseMode;
+    }
+
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: config.chatId,
-        text,
-        parse_mode: "Markdown",
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -31,5 +32,23 @@ export const createTelegramClient = (
         `Telegram error: ${data.description || response.statusText}`
       );
     }
-  },
-});
+  };
+
+  return {
+    sendMessage: async (text) => {
+      try {
+        await send(text, "Markdown");
+      } catch (error) {
+        const isParseError =
+          error instanceof Error &&
+          error.message.includes("can't parse entities");
+
+        if (!isParseError) {
+          throw error;
+        }
+
+        await send(text);
+      }
+    },
+  };
+};
