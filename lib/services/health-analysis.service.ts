@@ -34,6 +34,7 @@ export const createHealthAnalysisService = ({
 Analyze my health data.
 Period: ${periodStart} to ${periodEnd}
 Type: ${type}
+Format: Telegram Markdown
     `.trim();
 
     const analysis = await geminiClient.analyze({
