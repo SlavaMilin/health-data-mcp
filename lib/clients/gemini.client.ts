@@ -4,7 +4,7 @@ import { createConsoleLogger } from "../infrastructure/logger.ts";
 
 const logger = createConsoleLogger();
 
-const GEMINI_MODEL = "gemini-2.5-pro";
+const GEMINI_MODEL = "gemini-2.5-flash";
 const MAX_OUTPUT_TOKENS = 16384;
 
 export const createGeminiClient = (config: GeminiClientConfig): GeminiClient => {
