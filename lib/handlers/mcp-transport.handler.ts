@@ -87,8 +87,8 @@ export const createMcpTransportHandler = (
           return;
         }
 
-        // Create new transport for initialization requests
-        if (!sessionId && isInitRequest) {
+        // Create new transport for initialization requests (or re-initialization after deploy)
+        if (isInitRequest && (!sessionId || !transportsRepo.has(sessionId))) {
           const { transport } = await createAndConnectTransport();
           await transport.handleRequest(request.raw, reply.raw, body);
           return;
