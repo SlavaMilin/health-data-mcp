@@ -27,7 +27,7 @@ export const createHealthAnalysisService = ({
   mcpClient,
 }: HealthAnalysisServiceDeps): HealthAnalysisService => ({
   run: async (type = ANALYSIS_TYPE.WEEKLY) => {
-    const systemPrompt = instructionsRepo.get();
+    const systemPrompt = instructionsRepo.get(type);
     const { date, periodStart, periodEnd, today } = calculatePeriodDate(type);
 
     const userMessage = `

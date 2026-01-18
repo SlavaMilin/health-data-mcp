@@ -21,11 +21,17 @@ export interface Config {
   };
   schedule: {
     timezone: string;
-    daily?: string;
-    weekly?: string;
-    monthly?: string;
+    dailyTime?: string;
+    weeklyTime?: string;
+    weeklyDay: number;
+    monthlyTime?: string;
+    monthlyDay: number;
   };
-  instructionsPath: string;
+  instructions: {
+    daily: string;
+    weekly: string;
+    monthly: string;
+  };
 }
 
 export const loadConfig = (): Config => {
@@ -49,11 +55,17 @@ export const loadConfig = (): Config => {
     },
     schedule: {
       timezone: process.env.TIMEZONE || "UTC",
-      daily: process.env.CRON_DAILY,
-      weekly: process.env.CRON_WEEKLY,
-      monthly: process.env.CRON_MONTHLY,
+      dailyTime: process.env.DAILY_TIME,
+      weeklyTime: process.env.WEEKLY_TIME,
+      weeklyDay: parseInt(process.env.WEEKLY_DAY || "1", 10),
+      monthlyTime: process.env.MONTHLY_TIME,
+      monthlyDay: parseInt(process.env.MONTHLY_DAY || "1", 10),
     },
-    instructionsPath: "./instructions/ai-instructions.md",
+    instructions: {
+      daily: "./instructions/daily.md",
+      weekly: "./instructions/weekly.md",
+      monthly: "./instructions/weekly.md", // TODO: create separate monthly instructions
+    },
   };
 
   // Validate required config

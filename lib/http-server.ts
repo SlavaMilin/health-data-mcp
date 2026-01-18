@@ -38,6 +38,11 @@ import { registerAnalysisRoutes } from "./routes/analysis.routes.ts";
 import { createTelegramClient } from "./clients/telegram.client.ts";
 import { createGeminiClient } from "./clients/gemini.client.ts";
 import { setupServer as setupMcpServer } from "./stdio-server.ts";
+import {
+  timeToDailyCron,
+  timeToWeeklyCron,
+  timeToMonthlyCron,
+} from "./utils/schedule.utils.ts";
 import type { ClientMetadata, OAuthSessionData } from "./types/oauth.types.ts";
 
 export const createHttpServer = async () => {
@@ -108,7 +113,7 @@ export const createHttpServer = async () => {
   const transportsRepo = createMcpTransportsRepository();
   const healthDataRepo = createHealthDataRepository(db);
   const analysisHistoryRepo = createAnalysisHistoryRepository(db);
-  const instructionsRepo = createInstructionsRepository(config.instructionsPath);
+  const instructionsRepo = createInstructionsRepository(config.instructions);
 
   // ============================================================================
   // 7. Create Clients
@@ -150,14 +155,38 @@ export const createHttpServer = async () => {
   });
 
   const schedules: ScheduleConfig[] = [];
-  if (config.schedule.daily) {
-    schedules.push({ type: ANALYSIS_TYPE.DAILY, cron: config.schedule.daily });
+  if (config.schedule.dailyTime) {
+    const cron = timeToDailyCron(config.schedule.dailyTime);
+    if (!cron) {
+      fastify.log.error(`Invalid DAILY_TIME: "${config.schedule.dailyTime}", expected HH:MM`);
+    }
+    if (cron) {
+      schedules.push({ type: ANALYSIS_TYPE.DAILY, cron });
+    }
   }
-  if (config.schedule.weekly) {
-    schedules.push({ type: ANALYSIS_TYPE.WEEKLY, cron: config.schedule.weekly });
+  if (config.schedule.weeklyTime) {
+    const cron = timeToWeeklyCron(
+      config.schedule.weeklyTime,
+      config.schedule.weeklyDay
+    );
+    if (!cron) {
+      fastify.log.error(`Invalid WEEKLY_TIME: "${config.schedule.weeklyTime}", expected HH:MM`);
+    }
+    if (cron) {
+      schedules.push({ type: ANALYSIS_TYPE.WEEKLY, cron });
+    }
   }
-  if (config.schedule.monthly) {
-    schedules.push({ type: ANALYSIS_TYPE.MONTHLY, cron: config.schedule.monthly });
+  if (config.schedule.monthlyTime) {
+    const cron = timeToMonthlyCron(
+      config.schedule.monthlyTime,
+      config.schedule.monthlyDay
+    );
+    if (!cron) {
+      fastify.log.error(`Invalid MONTHLY_TIME: "${config.schedule.monthlyTime}", expected HH:MM`);
+    }
+    if (cron) {
+      schedules.push({ type: ANALYSIS_TYPE.MONTHLY, cron });
+    }
   }
 
   const scheduler = createSchedulerService({

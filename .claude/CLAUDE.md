@@ -202,7 +202,8 @@ Key components:
 - `telegram.client.ts` - Telegram Bot API client
 - `health-analysis.service.ts` - Orchestration (AI analysis → save → send)
 - `scheduler.service.ts` - node-cron wrapper for multiple schedules
-- `instructions/ai-instructions.md` - System prompt for Gemini (read fresh each time)
+- `instructions/daily.md` - System prompt for daily analysis
+- `instructions/weekly.md` - System prompt for weekly analysis (also used for monthly)
 
 MCP Integration:
 - Gemini connects to MCP server via `InMemoryTransport`
@@ -243,9 +244,11 @@ Optional - Scheduled Analysis:
 - `TELEGRAM_BOT_TOKEN`: Telegram bot token for sending analysis
 - `TELEGRAM_CHAT_ID`: Telegram chat ID to send analysis to
 - `TIMEZONE`: Timezone for scheduler (default: `UTC`)
-- `CRON_DAILY`: Cron expression for daily analysis (e.g., `0 9 * * *`)
-- `CRON_WEEKLY`: Cron expression for weekly analysis (e.g., `0 10 * * 1`)
-- `CRON_MONTHLY`: Cron expression for monthly analysis (e.g., `0 11 1 * *`)
+- `DAILY_TIME`: Time for daily analysis in HH:MM format (e.g., `09:00`)
+- `WEEKLY_TIME`: Time for weekly analysis in HH:MM format (e.g., `10:00`)
+- `WEEKLY_DAY`: Day of week for weekly analysis, 0-6 where 0=Sunday (default: `1` Monday)
+- `MONTHLY_TIME`: Time for monthly analysis in HH:MM format (e.g., `11:00`)
+- `MONTHLY_DAY`: Day of month for monthly analysis, 1-31 (default: `1`)
 
 ## Database Schema
 

@@ -1,11 +1,18 @@
 import { readFileSync } from "fs";
+import type { AnalysisType } from "../types/analysis.types.ts";
+
+export interface InstructionsPaths {
+  daily: string;
+  weekly: string;
+  monthly: string;
+}
 
 export interface InstructionsRepository {
-  get: () => string;
+  get: (type: AnalysisType) => string;
 }
 
 export const createInstructionsRepository = (
-  filePath: string
+  paths: InstructionsPaths
 ): InstructionsRepository => ({
-  get: () => readFileSync(filePath, "utf-8"),
+  get: (type) => readFileSync(paths[type], "utf-8"),
 });
