@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS workouts (
   start_date TEXT,
   end_date TEXT,
   data TEXT,
-  UNIQUE(type_id, data)
+  UNIQUE(type_id, start_date, end_date)
 );
 
 -- Indexes
