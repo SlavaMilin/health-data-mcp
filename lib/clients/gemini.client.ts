@@ -11,7 +11,7 @@ export const GeminiModel = {
 
 export type GeminiModelType = (typeof GeminiModel)[keyof typeof GeminiModel];
 
-const GEMINI_MODEL: GeminiModelType = GeminiModel.FLASH;
+const GEMINI_MODEL: GeminiModelType = GeminiModel.PRO;
 const MAX_OUTPUT_TOKENS = 16384;
 
 export const createGeminiClient = (config: GeminiClientConfig): GeminiClient => {
@@ -31,16 +31,7 @@ export const createGeminiClient = (config: GeminiClientConfig): GeminiClient => 
         },
       });
 
-      // Flash model: simple response.text
-      if (GEMINI_MODEL === GeminiModel.FLASH) {
-        logger.info(
-          { model: GEMINI_MODEL, textLength: response.text?.length ?? 0 },
-          "Gemini Flash response"
-        );
-        return response.text ?? "";
-      }
-
-      // Pro model: collect text from all AFC turns
+      // Collect text from all AFC turns (Pro model) or just final response (Flash)
       const allTextParts: string[] = [];
 
       const afcHistory = response.automaticFunctionCallingHistory;
