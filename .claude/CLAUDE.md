@@ -44,7 +44,7 @@ This project follows a **layered architecture with Go-style dependency injection
 
 ### Dependency Flow (Top to Bottom)
 ```
-Config → Repositories → Services → Handlers → Routes
+Config → Repositories → Clients → Services → Handlers → Routes
 ```
 
 ### Layer Responsibilities
@@ -54,39 +54,49 @@ Config → Repositories → Services → Handlers → Routes
    - Use closures for state management (no classes)
    - Export factory functions that return objects with methods
 
-2. **Services** (`lib/services/*.service.ts`)
+2. **Clients** (`lib/clients/*.client.ts`)
+   - HTTP access to external APIs (Telegram, Gemini, etc.)
+   - Thin wrappers around API calls
+   - No business logic - just API communication
+
+3. **Services** (`lib/services/*.service.ts`)
    - Business logic ONLY
    - Accept primitive types, DTOs, and domain objects
-   - Orchestrate multiple repositories
+   - Orchestrate multiple repositories and clients
    - No direct data access
    - **NEVER** accept framework objects (request, reply)
 
-3. **Handlers** (`lib/handlers/*.handler.ts`)
+4. **Handlers** (`lib/handlers/*.handler.ts`)
    - Transport layer - handle request/response formatting
    - **HTTP handlers**: Accept FastifyRequest and FastifyReply
    - **MCP handlers**: Accept tool args, return McpToolResponse
    - Parse request data, call services, format responses
    - Validation and error mapping
 
-4. **Schemas** (`lib/schemas/*.schemas.ts`)
+5. **Schemas** (`lib/schemas/*.schemas.ts`)
    - Zod schemas for validation
    - Tool/endpoint descriptions and metadata
    - Kept separate from routes for cleaner code
 
-5. **Routes** (`lib/routes/*.routes.ts`)
+6. **Routes** (`lib/routes/*.routes.ts`)
    - Very thin layer - ONLY register routes/tools
    - **HTTP routes**: `fastify.get('/path', handler)`
    - **MCP routes**: `server.registerTool('name', schema, handler)`
    - No logic, no parsing, no formatting
 
-6. **Middleware** (`lib/middleware/*.middleware.ts`)
+7. **Middleware** (`lib/middleware/*.middleware.ts`)
    - Return factory functions for middleware
    - Injected dependencies via closures
 
-7. **Infrastructure** (`lib/infrastructure/*.ts`)
-   - Low-level utilities (database migrations, etc.)
+8. **Infrastructure** (`lib/infrastructure/*.ts`)
+   - Low-level utilities (database migrations, MCP client setup, logger)
    - Not business logic, not services
    - Simple functions with explicit dependencies
+
+9. **Utils** (`lib/utils/*.utils.ts`)
+   - Pure utility functions (text splitting, date calculations)
+   - No side effects, no dependencies
+   - Easily testable
 
 ### Key Architectural Patterns
 
@@ -170,6 +180,34 @@ Available tools:
 - Manages MCP transports via `mcp.service.ts`
 - Includes migration endpoints for database updates
 - Protected by auth middleware (requires `AUTH_TOKEN`)
+- Runs scheduled health analysis via cron
+
+### 3. Scheduled Health Analysis
+Automated AI-powered health analysis sent to Telegram on schedule.
+
+Architecture:
+```
+Scheduler (cron) / HTTP endpoint
+        ↓
+health-analysis.service.ts
+        ↓
+┌───────┴───────┐
+↓               ↓
+Gemini API      Telegram API
+(via MCP)       (send message)
+```
+
+Key components:
+- `gemini.client.ts` - Gemini API with MCP tool support (`mcpToTool`)
+- `telegram.client.ts` - Telegram Bot API client
+- `health-analysis.service.ts` - Orchestration (AI analysis → save → send)
+- `scheduler.service.ts` - node-cron wrapper for multiple schedules
+- `instructions/ai-instructions.md` - System prompt for Gemini (read fresh each time)
+
+MCP Integration:
+- Gemini connects to MCP server via `InMemoryTransport`
+- AI uses existing MCP tools (`query_metrics`, `list_metric_types`, etc.)
+- No data duplication - AI queries what it needs
 
 ### Database Views
 The server uses pre-joined views for efficient queries:
@@ -190,14 +228,24 @@ The server uses pre-joined views for efficient queries:
 Required:
 - `AUTH_TOKEN`: Bearer token for protected endpoints (migration, etc.)
 
-Optional:
+Optional - Database & Server:
 - `HEALTH_DB_PATH`: Path to SQLite database (default: `./data/health_data.db`)
 - `PORT`: Server port (default: 3000)
 - `HOST`: Server host (default: 0.0.0.0)
 - `BASE_URL`: Public base URL for OAuth redirects
+
+Optional - GitHub OAuth:
 - `GITHUB_CLIENT_ID`: GitHub OAuth app client ID
 - `GITHUB_CLIENT_SECRET`: GitHub OAuth app client secret
-- `OAUTH_TOKENS_FILE`: Path to OAuth tokens JSON file (default: `./data/oauth-tokens.json`)
+
+Optional - Scheduled Analysis:
+- `GEMINI_API_KEY`: Google Gemini API key for AI analysis
+- `TELEGRAM_BOT_TOKEN`: Telegram bot token for sending analysis
+- `TELEGRAM_CHAT_ID`: Telegram chat ID to send analysis to
+- `TIMEZONE`: Timezone for scheduler (default: `UTC`)
+- `CRON_DAILY`: Cron expression for daily analysis (e.g., `0 9 * * *`)
+- `CRON_WEEKLY`: Cron expression for weekly analysis (e.g., `0 10 * * 1`)
+- `CRON_MONTHLY`: Cron expression for monthly analysis (e.g., `0 11 1 * *`)
 
 ## Database Schema
 
@@ -206,7 +254,22 @@ The database stores Apple Health data with the following structure:
 - `health_metrics`: Individual metric measurements (linked to metric_types)
 - `workout_types`: Workout type definitions (name, schema)
 - `workouts`: Individual workout sessions (linked to workout_types)
+- `analysis_history`: AI-generated health analysis history (date, type, analysis)
+- `goals`: User health goals with metric targets
 - Views: `metrics_with_types`, `workouts_with_types` (pre-joined for queries)
+
+### Analysis History
+The `analysis_history` table uses `UNIQUE(date, type)` constraint with upsert pattern:
+- `date`: Period end date (YYYY-MM-DD) - calculated based on type
+- `type`: Analysis type (`daily`, `weekly`, `monthly`)
+- Repeated analysis for same date+type overwrites previous entry
+
+Date calculation by type:
+| Type | date = | Period |
+|------|--------|--------|
+| daily | yesterday | 1 day |
+| weekly | last Sunday | Mon-Sun (7 days) |
+| monthly | last day of prev month | full month |
 
 ### Schema Field Pattern
 Each metric/workout type has a `schema` field containing a JSON array of field names. These field names can be used with `JSON_EXTRACT(data, '$.fieldName')` to access nested data in queries.
@@ -226,7 +289,8 @@ Health data is imported from Auto Export iOS app JSON format:
 
 ## File Naming Conventions
 
-- `*.repository.ts` - Data access layer
+- `*.repository.ts` - Data access layer (DB, files, cache)
+- `*.client.ts` - External API clients (Telegram, Gemini)
 - `*.service.ts` - Business logic layer
 - `*.handler.ts` - Transport handlers (HTTP or MCP)
 - `*.schemas.ts` - Zod schemas and metadata
@@ -234,6 +298,7 @@ Health data is imported from Auto Export iOS app JSON format:
 - `*.middleware.ts` - Middleware factories
 - `*.constants.ts` - Constants and configuration
 - `*.types.ts` - TypeScript type definitions
+- `*.utils.ts` - Pure utility functions
 - `*.test.ts` - Unit tests (no server)
 - `*.integration.test.ts` - Integration tests (auto-start server)
 
@@ -246,8 +311,8 @@ Health data is imported from Auto Export iOS app JSON format:
 #### When to Write Tests
 
 1. **New files**: Write tests immediately after creating any new file
-   - ✅ Repositories, Services, Handlers, Middleware
-   - ❌ Skip only: Constants, Types, Schemas, Routes (too thin to test)
+   - ✅ Repositories, Services, Handlers, Middleware, Utils
+   - ❌ Skip: Constants, Types, Schemas, Routes, Clients (too thin to test)
 
 2. **Modified files**: Update or add tests when changing code
    - Modified functions/methods: Update existing tests

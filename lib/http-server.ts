@@ -11,20 +11,33 @@ import { loadConfig } from "./config/config.ts";
 import { createKeyvRepository } from "./repositories/keyv.repository.ts";
 import { createMcpTransportsRepository } from "./repositories/mcp-transports.repository.ts";
 import { createHealthDataRepository } from "./repositories/health-data.repository.ts";
+import { createAnalysisHistoryRepository } from "./repositories/analysis-history.repository.ts";
+import { createInstructionsRepository } from "./repositories/instructions.repository.ts";
 import { KEYV_NAMESPACE, KEYV_TTL } from "./constants/keyv.constants.ts";
 import { createOAuthService } from "./services/oauth.service.ts";
 import { createHealthImportService } from "./services/health-import.service.ts";
+import { createTelegramService } from "./services/telegram.service.ts";
+import { createHealthAnalysisService } from "./services/health-analysis.service.ts";
+import { createSchedulerService, type ScheduleConfig } from "./services/scheduler.service.ts";
+import { ANALYSIS_TYPE } from "./constants/analysis.constants.ts";
 import { runMigrations } from "./infrastructure/migrations.ts";
+import { createMcpClient } from "./infrastructure/mcp-client.ts";
+import { fromFastifyLogger } from "./infrastructure/logger.ts";
 import { MIGRATIONS_DIR } from "./constants/paths.constants.ts";
 import { createMcpTransportHandler } from "./handlers/mcp-transport.handler.ts";
 import { createOAuthHandler } from "./handlers/oauth.handler.ts";
 import { createHealthImportHandler } from "./handlers/health-import.handler.ts";
+import { createAnalysisHandler } from "./handlers/analysis.handler.ts";
 import { createAuthMiddleware } from "./middleware/auth.middleware.ts";
 import { createMcpOAuthMiddleware } from "./middleware/mcp-oauth.middleware.ts";
 import { registerHealthRoutes } from "./routes/health.routes.ts";
 import { registerMcpRoutes } from "./routes/mcp.routes.ts";
 import { registerOAuthRoutes } from "./routes/oauth.routes.ts";
 import { registerHealthImportRoutes } from "./routes/health-import.routes.ts";
+import { registerAnalysisRoutes } from "./routes/analysis.routes.ts";
+import { createTelegramClient } from "./clients/telegram.client.ts";
+import { createGeminiClient } from "./clients/gemini.client.ts";
+import { setupServer as setupMcpServer } from "./stdio-server.ts";
 import type { ClientMetadata, OAuthSessionData } from "./types/oauth.types.ts";
 
 export const createHttpServer = async () => {
@@ -94,9 +107,28 @@ export const createHttpServer = async () => {
   const oauthSessionsRepo = createKeyvRepository<OAuthSessionData>(oauthSessionsStore);
   const transportsRepo = createMcpTransportsRepository();
   const healthDataRepo = createHealthDataRepository(db);
+  const analysisHistoryRepo = createAnalysisHistoryRepository(db);
+  const instructionsRepo = createInstructionsRepository(config.instructionsPath);
 
   // ============================================================================
-  // 7. Create Services
+  // 7. Create Clients
+  // ============================================================================
+  const telegramClient = createTelegramClient({
+    botToken: config.telegram.botToken,
+    chatId: config.telegram.chatId,
+  });
+  const geminiClient = createGeminiClient({ apiKey: config.gemini.apiKey });
+
+  // ============================================================================
+  // 8. Create MCP Server & Client
+  // ============================================================================
+  const mcpServer = await setupMcpServer({
+    db: { readDb: db, writeDb: db, dbPath: config.db },
+  });
+  const mcpClient = await createMcpClient(mcpServer);
+
+  // ============================================================================
+  // 9. Create Services
   // ============================================================================
   const oauthService = createOAuthService({
     config,
@@ -108,9 +140,35 @@ export const createHttpServer = async () => {
   });
 
   const healthImportService = createHealthImportService(healthDataRepo, fastify.log);
+  const telegramService = createTelegramService(telegramClient);
+  const healthAnalysisService = createHealthAnalysisService({
+    geminiClient,
+    telegramService,
+    analysisHistoryRepo,
+    instructionsRepo,
+    mcpClient,
+  });
+
+  const schedules: ScheduleConfig[] = [];
+  if (config.schedule.daily) {
+    schedules.push({ type: ANALYSIS_TYPE.DAILY, cron: config.schedule.daily });
+  }
+  if (config.schedule.weekly) {
+    schedules.push({ type: ANALYSIS_TYPE.WEEKLY, cron: config.schedule.weekly });
+  }
+  if (config.schedule.monthly) {
+    schedules.push({ type: ANALYSIS_TYPE.MONTHLY, cron: config.schedule.monthly });
+  }
+
+  const scheduler = createSchedulerService({
+    schedules,
+    timezone: config.schedule.timezone,
+    runAnalysis: (type) => healthAnalysisService.run(type),
+    logger: fromFastifyLogger(fastify.log),
+  });
 
   // ============================================================================
-  // 8. Create Handlers
+  // 10. Create Handlers
   // ============================================================================
   const mcpTransportHandler = createMcpTransportHandler(transportsRepo, fastify.log);
   const oauthHandler = createOAuthHandler({
@@ -118,21 +176,22 @@ export const createHttpServer = async () => {
     baseUrl: config.baseUrl,
   });
   const healthImportHandler = createHealthImportHandler(healthImportService);
+  const analysisHandler = createAnalysisHandler(healthAnalysisService);
 
   // ============================================================================
-  // 9. Register Plugins
+  // 11. Register Plugins
   // ============================================================================
   await fastify.register(cors);
   await fastify.register(formbody);
 
   // ============================================================================
-  // 10. Register Middleware
+  // 12. Register Middleware
   // ============================================================================
   fastify.addHook("preHandler", createMcpOAuthMiddleware(oauthTokensRepo));
   fastify.addHook("preHandler", createAuthMiddleware(config));
 
   // ============================================================================
-  // 11. Register Routes
+  // 13. Register Routes
   // ============================================================================
   registerHealthRoutes(fastify);
   registerMcpRoutes(fastify, mcpTransportHandler);
@@ -140,12 +199,15 @@ export const createHttpServer = async () => {
     enableCallback: Boolean(config.github.clientId && config.github.clientSecret),
   });
   registerHealthImportRoutes(fastify, healthImportHandler);
+  registerAnalysisRoutes(fastify, analysisHandler);
 
   // ============================================================================
-  // 12. Graceful Shutdown Handler
+  // 14. Graceful Shutdown Handler
   // ============================================================================
   process.on("SIGINT", async () => {
     console.log("\nShutting down gracefully...");
+
+    scheduler.stop();
 
     for (const [sessionId, transport] of transportsRepo.entries()) {
       try {
@@ -163,8 +225,12 @@ export const createHttpServer = async () => {
   });
 
   // ============================================================================
-  // 13. Start Server
+  // 15. Start Scheduler & Server
   // ============================================================================
+  if (schedules.length > 0) {
+    scheduler.start();
+  }
+
   try {
     await fastify.listen({ port: config.port, host: config.host });
   } catch (err) {

@@ -12,6 +12,20 @@ export interface Config {
     clientSecret?: string;
     apiUrl: string;
   };
+  gemini: {
+    apiKey: string;
+  };
+  telegram: {
+    botToken: string;
+    chatId: string;
+  };
+  schedule: {
+    timezone: string;
+    daily?: string;
+    weekly?: string;
+    monthly?: string;
+  };
+  instructionsPath: string;
 }
 
 export const loadConfig = (): Config => {
@@ -26,6 +40,20 @@ export const loadConfig = (): Config => {
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       apiUrl: process.env.GITHUB_API_URL || "https://github.com",
     },
+    gemini: {
+      apiKey: process.env.GEMINI_API_KEY || "",
+    },
+    telegram: {
+      botToken: process.env.TELEGRAM_BOT_TOKEN || "",
+      chatId: process.env.TELEGRAM_CHAT_ID || "",
+    },
+    schedule: {
+      timezone: process.env.TIMEZONE || "UTC",
+      daily: process.env.CRON_DAILY,
+      weekly: process.env.CRON_WEEKLY,
+      monthly: process.env.CRON_MONTHLY,
+    },
+    instructionsPath: "./instructions/ai-instructions.md",
   };
 
   // Validate required config
