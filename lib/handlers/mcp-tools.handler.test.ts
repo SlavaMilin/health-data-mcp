@@ -20,6 +20,9 @@ describe('McpToolsHandler', () => {
         tables: [{ name: 'metric_types', sql: 'CREATE TABLE...' }],
         views: [{ name: 'metrics_with_types', sql: 'CREATE VIEW...' }],
       })),
+      getAnalysisHistory: vi.fn(() => [
+        { id: 1, date: '2024-01-07', type: 'weekly' as const, analysis: '# Weekly Analysis', created_at: '2024-01-08 09:00:00' },
+      ]),
     };
 
     handler = createMcpToolsHandler(mockService);
@@ -130,6 +133,31 @@ describe('McpToolsHandler', () => {
       expect(result.views).toHaveLength(1);
       expect(result.query_patterns).toBeDefined();
       expect(result.how_to_use_schema).toBeDefined();
+    });
+  });
+
+  describe('getAnalysisHistory', () => {
+    it('should return text response on success', () => {
+      const result = handler.getAnalysisHistory({ type: 'weekly' });
+
+      expect(result.content).toHaveLength(1);
+      expect(result.isError).toBeUndefined();
+
+      const data = JSON.parse(result.content[0].text);
+      expect(data).toHaveLength(1);
+      expect(data[0].type).toBe('weekly');
+    });
+
+    it('should return error response on failure', () => {
+      mockService.getAnalysisHistory = vi.fn(() => {
+        throw new Error('Database error');
+      });
+
+      const result = handler.getAnalysisHistory({});
+
+      expect(result.isError).toBe(true);
+      const data = JSON.parse(result.content[0].text);
+      expect(data.error).toBe('Database error');
     });
   });
 

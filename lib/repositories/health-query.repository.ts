@@ -7,6 +7,8 @@ import type {
   WorkoutMetadataRow,
   QueryMetricsParams,
   SchemaInfo,
+  AnalysisHistoryRow,
+  GetAnalysisHistoryParams,
 } from '../types/health-query.types.ts';
 
 export interface HealthQueryRepository {
@@ -19,6 +21,7 @@ export interface HealthQueryRepository {
   queryMetricsAggregated: (params: QueryMetricsParams) => unknown[];
   executeSQL: (query: string) => unknown[];
   getSchemaInfo: () => SchemaInfo;
+  getAnalysisHistory: (params: GetAnalysisHistoryParams) => AnalysisHistoryRow[];
 }
 
 export const createHealthQueryRepository = (db: Database.Database): HealthQueryRepository => {
@@ -126,6 +129,29 @@ export const createHealthQueryRepository = (db: Database.Database): HealthQueryR
         .all() as Array<{ name: string; sql: string }>;
 
       return { tables, views };
+    },
+
+    getAnalysisHistory: (params) => {
+      const { type, start_date, end_date, limit = 10 } = params;
+      let query = 'SELECT id, date, type, analysis, created_at FROM analysis_history WHERE 1=1';
+      const queryParams: (string | number)[] = [];
+
+      if (type) {
+        query += ' AND type = ?';
+        queryParams.push(type);
+      }
+      if (start_date) {
+        query += ' AND date >= ?';
+        queryParams.push(start_date);
+      }
+      if (end_date) {
+        query += ' AND date <= ?';
+        queryParams.push(end_date);
+      }
+      query += ' ORDER BY date DESC LIMIT ?';
+      queryParams.push(limit);
+
+      return db.prepare(query).all(...queryParams) as AnalysisHistoryRow[];
     },
   };
 };

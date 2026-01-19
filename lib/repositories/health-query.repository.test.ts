@@ -229,4 +229,87 @@ describe('HealthQueryRepository', () => {
       expect(viewNames).toContain('metrics_with_types');
     });
   });
+
+  describe('getAnalysisHistory', () => {
+    beforeEach(() => {
+      db.prepare(`
+        INSERT INTO analysis_history (date, type, analysis, created_at)
+        VALUES ('2024-01-07', 'weekly', '# Weekly Analysis 1', '2024-01-08 09:00:00')
+      `).run();
+      db.prepare(`
+        INSERT INTO analysis_history (date, type, analysis, created_at)
+        VALUES ('2024-01-14', 'weekly', '# Weekly Analysis 2', '2024-01-15 09:00:00')
+      `).run();
+      db.prepare(`
+        INSERT INTO analysis_history (date, type, analysis, created_at)
+        VALUES ('2024-01-08', 'daily', '# Daily Analysis', '2024-01-09 09:00:00')
+      `).run();
+      db.prepare(`
+        INSERT INTO analysis_history (date, type, analysis, created_at)
+        VALUES ('2024-01-31', 'monthly', '# Monthly Analysis', '2024-02-01 09:00:00')
+      `).run();
+    });
+
+    it('should return all analyses ordered by date descending', () => {
+      const results = repo.getAnalysisHistory({});
+
+      expect(results).toHaveLength(4);
+      expect(results[0].date).toBe('2024-01-31');
+      expect(results[3].date).toBe('2024-01-07');
+    });
+
+    it('should filter by type', () => {
+      const results = repo.getAnalysisHistory({ type: 'weekly' });
+
+      expect(results).toHaveLength(2);
+      expect(results.every((r) => r.type === 'weekly')).toBe(true);
+    });
+
+    it('should filter by start_date', () => {
+      const results = repo.getAnalysisHistory({ start_date: '2024-01-10' });
+
+      expect(results).toHaveLength(2);
+      expect(results[0].date).toBe('2024-01-31');
+      expect(results[1].date).toBe('2024-01-14');
+    });
+
+    it('should filter by end_date', () => {
+      const results = repo.getAnalysisHistory({ end_date: '2024-01-10' });
+
+      expect(results).toHaveLength(2);
+      expect(results[0].date).toBe('2024-01-08');
+      expect(results[1].date).toBe('2024-01-07');
+    });
+
+    it('should filter by date range', () => {
+      const results = repo.getAnalysisHistory({
+        start_date: '2024-01-08',
+        end_date: '2024-01-14',
+      });
+
+      expect(results).toHaveLength(2);
+    });
+
+    it('should respect limit', () => {
+      const results = repo.getAnalysisHistory({ limit: 2 });
+
+      expect(results).toHaveLength(2);
+    });
+
+    it('should use default limit of 10', () => {
+      const results = repo.getAnalysisHistory({});
+
+      expect(results.length).toBeLessThanOrEqual(10);
+    });
+
+    it('should combine type and date filters', () => {
+      const results = repo.getAnalysisHistory({
+        type: 'weekly',
+        start_date: '2024-01-10',
+      });
+
+      expect(results).toHaveLength(1);
+      expect(results[0].date).toBe('2024-01-14');
+    });
+  });
 });

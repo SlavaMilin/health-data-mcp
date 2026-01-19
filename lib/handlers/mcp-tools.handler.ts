@@ -1,5 +1,5 @@
 import type { HealthQueryService } from '../services/health-query.service.ts';
-import type { McpToolResponse, QueryMetricsParams, SchemaInfo } from '../types/health-query.types.ts';
+import type { McpToolResponse, QueryMetricsParams, SchemaInfo, GetAnalysisHistoryParams } from '../types/health-query.types.ts';
 import { QUERY_PATTERNS, SCHEMA_USAGE } from '../constants/query-patterns.constants.ts';
 
 export interface SchemaResourceResponse extends SchemaInfo {
@@ -13,6 +13,7 @@ export interface McpToolsHandler {
   listWorkoutTypes: () => McpToolResponse;
   executeSQL: (args: { query: string }) => McpToolResponse;
   getSchemaResource: () => SchemaResourceResponse;
+  getAnalysisHistory: (args: GetAnalysisHistoryParams) => McpToolResponse;
 }
 
 const textResponse = (data: unknown): McpToolResponse => ({
@@ -74,5 +75,14 @@ export const createMcpToolsHandler = (
       query_patterns: QUERY_PATTERNS,
       how_to_use_schema: SCHEMA_USAGE,
     }),
+
+    getAnalysisHistory: (args) => {
+      try {
+        const results = healthQueryService.getAnalysisHistory(args);
+        return textResponse(results);
+      } catch (error) {
+        return errorResponse((error as Error).message);
+      }
+    },
   };
 };

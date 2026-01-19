@@ -41,6 +41,9 @@ describe('HealthQueryService', () => {
         tables: [{ name: 'metric_types', sql: 'CREATE TABLE...' }],
         views: [{ name: 'metrics_with_types', sql: 'CREATE VIEW...' }],
       })),
+      getAnalysisHistory: vi.fn(() => [
+        { id: 1, date: '2024-01-07', type: 'weekly' as const, analysis: '# Weekly', created_at: '2024-01-08' },
+      ]),
     };
 
     service = createHealthQueryService(mockRepo);
@@ -167,6 +170,22 @@ describe('HealthQueryService', () => {
       const result = service.executeSQL('INVALID SQL');
 
       expect(result).toEqual({ error: 'SQL syntax error' });
+    });
+  });
+
+  describe('getAnalysisHistory', () => {
+    it('should pass params to repository', () => {
+      const params = { type: 'weekly' as const, limit: 5 };
+      service.getAnalysisHistory(params);
+
+      expect(mockRepo.getAnalysisHistory).toHaveBeenCalledWith(params);
+    });
+
+    it('should return results from repository', () => {
+      const result = service.getAnalysisHistory({});
+
+      expect(result).toHaveLength(1);
+      expect(result[0].type).toBe('weekly');
     });
   });
 });

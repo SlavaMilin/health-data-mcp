@@ -93,3 +93,40 @@ See health://schema resource for complete query patterns, examples, and table sc
     query: z.string().describe('SQL query to execute'),
   }),
 };
+
+export const getAnalysisHistorySchema = {
+  title: 'Get Analysis History',
+  description: `Retrieve past AI-generated health analyses.
+
+ANALYSIS TYPES:
+- daily: Daily health summary and recommendations
+- weekly: Weekly trends and patterns analysis
+- monthly: Monthly comprehensive health review
+
+FIELDS RETURNED:
+- id: Unique analysis ID
+- date: Period end date (YYYY-MM-DD)
+- type: Analysis type (daily, weekly, monthly)
+- analysis: AI-generated analysis text (markdown format)
+- created_at: When the analysis was generated
+
+Use this to review past analyses, track health trends over time, or reference previous recommendations.`,
+  inputSchema: z.object({
+    type: z
+      .enum(['daily', 'weekly', 'monthly'])
+      .optional()
+      .describe('Filter by analysis type. If not specified, returns all types.'),
+    start_date: dateSchema
+      .optional()
+      .describe('Start date filter (YYYY-MM-DD). Returns analyses with date >= start_date.'),
+    end_date: dateSchema
+      .optional()
+      .describe('End date filter (YYYY-MM-DD). Returns analyses with date <= end_date.'),
+    limit: z
+      .number()
+      .min(1)
+      .max(100)
+      .default(10)
+      .describe('Maximum number of analyses to return (1-100, default: 10)'),
+  }),
+};

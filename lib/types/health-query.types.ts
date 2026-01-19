@@ -58,6 +58,24 @@ export interface SchemaInfo {
   views: Array<{ name: string; sql: string }>;
 }
 
+// Analysis types
+export type AnalysisType = 'daily' | 'weekly' | 'monthly';
+
+export interface AnalysisHistoryRow {
+  id: number;
+  date: string;
+  type: AnalysisType;
+  analysis: string;
+  created_at: string;
+}
+
+export interface GetAnalysisHistoryParams {
+  type?: AnalysisType;
+  start_date?: string;
+  end_date?: string;
+  limit?: number;
+}
+
 // MCP response types
 export interface McpTextContent {
   type: 'text';
