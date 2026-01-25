@@ -152,6 +152,7 @@ export const createHttpServer = async () => {
     analysisHistoryRepo,
     instructionsRepo,
     mcpClient,
+    timezone: config.schedule.timezone,
   });
 
   const schedules: ScheduleConfig[] = [];

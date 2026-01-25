@@ -54,7 +54,7 @@ export const loadConfig = (): Config => {
       chatId: process.env.TELEGRAM_CHAT_ID || "",
     },
     schedule: {
-      timezone: process.env.TIMEZONE || "UTC",
+      timezone: process.env.TIMEZONE || "CET",
       dailyTime: process.env.DAILY_TIME,
       weeklyTime: process.env.WEEKLY_TIME,
       weeklyDay: parseInt(process.env.WEEKLY_DAY || "1", 10),

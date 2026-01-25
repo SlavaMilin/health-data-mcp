@@ -17,6 +17,7 @@ export interface HealthAnalysisServiceDeps {
   analysisHistoryRepo: AnalysisHistoryRepository;
   instructionsRepo: InstructionsRepository;
   mcpClient: Client;
+  timezone: string;
 }
 
 export const createHealthAnalysisService = ({
@@ -25,10 +26,14 @@ export const createHealthAnalysisService = ({
   analysisHistoryRepo,
   instructionsRepo,
   mcpClient,
+  timezone,
 }: HealthAnalysisServiceDeps): HealthAnalysisService => ({
   run: async (type = ANALYSIS_TYPE.WEEKLY) => {
     const systemPrompt = instructionsRepo.get(type);
-    const { date, periodStart, periodEnd, today } = calculatePeriodDate(type);
+    const { date, periodStart, periodEnd, today } = calculatePeriodDate(
+      type,
+      timezone
+    );
 
     const userMessage = `
 Today: ${today}
