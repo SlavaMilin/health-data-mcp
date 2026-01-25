@@ -1,4 +1,4 @@
-import type { HealthDataRepository } from "../repositories/health-data.repository.ts";
+import type { HealthDataPort } from "../domain/health.port.ts";
 import type { Logger } from "../types/logger.types.ts";
 import type { HealthImportResult } from "../domain/health.ts";
 import type {
@@ -50,7 +50,7 @@ const normalizeMetricsData = (json: HealthImportData): Record<string, HealthMetr
 };
 
 export const createHealthImportService = (
-  healthDataRepo: HealthDataRepository,
+  healthDataRepo: HealthDataPort,
   logger: Logger
 ): HealthImportService => {
   const migrateMetrics = (metricsData: Record<string, HealthMetricData>): number => {

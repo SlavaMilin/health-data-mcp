@@ -1,13 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
-import { createHealthQueryRepository, type HealthQueryRepository } from './health-query.repository.ts';
+import { createHealthQueryRepository } from './health-query.repository.ts';
 import { createHealthDataRepository } from './health-data.repository.ts';
 import { runMigrations } from '../infrastructure/migrations.ts';
 import { MIGRATIONS_DIR } from '../constants/paths.constants.ts';
+import type { HealthQueryPort } from '../domain/health.port.ts';
+import type { EnrichedMetricType, EnrichedWorkoutType } from '../domain/health.ts';
 
 describe('HealthQueryRepository', () => {
   let db: Database.Database;
-  let repo: HealthQueryRepository;
+  let repo: HealthQueryPort;
 
   beforeEach(async () => {
     db = new Database(':memory:');

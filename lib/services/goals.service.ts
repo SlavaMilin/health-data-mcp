@@ -1,5 +1,4 @@
-import type { GoalsQueryRepository } from '../repositories/goals-query.repository.ts';
-import type { GoalsDataRepository } from '../repositories/goals-data.repository.ts';
+import type { GoalsQueryPort, GoalsDataPort } from '../domain/goals.port.ts';
 import type {
   Goal,
   CreateGoalParams,
@@ -16,8 +15,8 @@ export interface GoalsService {
 }
 
 export const createGoalsService = (
-  queryRepo: GoalsQueryRepository,
-  dataRepo: GoalsDataRepository,
+  queryRepo: GoalsQueryPort,
+  dataRepo: GoalsDataPort,
 ): GoalsService => {
   return {
     create: (params) => {

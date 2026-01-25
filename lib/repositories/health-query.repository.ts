@@ -6,6 +6,7 @@ import type {
   EnrichedWorkoutType,
 } from '../domain/health.ts';
 import type { AnalysisRecord, GetAnalysisHistoryParams } from '../domain/analysis.ts';
+import type { HealthQueryPort } from '../domain/health.port.ts';
 
 interface MetricTypeRow {
   name: string;
@@ -42,17 +43,7 @@ interface AnalysisHistoryRow {
   created_at: string;
 }
 
-export interface HealthQueryRepository {
-  listMetricTypes: () => EnrichedMetricType[];
-  listWorkoutTypes: () => EnrichedWorkoutType[];
-  queryMetricsRaw: (params: QueryMetricsParams) => unknown[];
-  queryMetricsAggregated: (params: QueryMetricsParams) => unknown[];
-  executeSQL: (query: string) => unknown[];
-  getSchemaInfo: () => SchemaInfo;
-  getAnalysisHistory: (params: GetAnalysisHistoryParams) => AnalysisRecord[];
-}
-
-export const createHealthQueryRepository = (db: Database.Database): HealthQueryRepository => {
+export const createHealthQueryRepository = (db: Database.Database): HealthQueryPort => {
   const getMetricTypesStmt = db.prepare<[], MetricTypeRow>(
     'SELECT name, unit, schema FROM metric_types ORDER BY name',
   );

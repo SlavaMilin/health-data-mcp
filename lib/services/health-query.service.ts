@@ -1,4 +1,4 @@
-import type { HealthQueryRepository } from '../repositories/health-query.repository.ts';
+import type { HealthQueryPort } from '../domain/health.port.ts';
 import type {
   QueryMetricsParams,
   EnrichedMetricType,
@@ -17,7 +17,7 @@ export interface HealthQueryService {
 }
 
 export const createHealthQueryService = (
-  healthQueryRepo: HealthQueryRepository,
+  healthQueryRepo: HealthQueryPort,
 ): HealthQueryService => ({
   queryMetrics: (params) => {
     const { aggregation = 'none' } = params;

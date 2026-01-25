@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
-import { createGoalsDataRepository, type GoalsDataRepository } from './goals-data.repository.ts';
+import { createGoalsDataRepository } from './goals-data.repository.ts';
 import { runMigrations } from '../infrastructure/migrations.ts';
 import { MIGRATIONS_DIR } from '../constants/paths.constants.ts';
 import { GOAL_STATUS, GOAL_PERIOD, METRIC_DIRECTION } from '../domain/goals.constants.ts';
+import type { GoalsDataPort } from '../domain/goals.port.ts';
 
 interface GoalRow {
   id: number;
@@ -20,7 +21,7 @@ interface GoalRow {
 
 describe('GoalsDataRepository', () => {
   let db: Database.Database;
-  let repo: GoalsDataRepository;
+  let repo: GoalsDataPort;
 
   const getGoal = (id: number): GoalRow | undefined => {
     return db.prepare('SELECT * FROM goals WHERE id = ?').get(id) as GoalRow | undefined;

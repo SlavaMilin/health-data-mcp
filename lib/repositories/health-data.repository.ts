@@ -1,22 +1,11 @@
 import type Database from 'better-sqlite3';
+import type { HealthDataPort } from '../domain/health.port.ts';
 
 interface IdRow {
   id: number;
 }
 
-export interface HealthDataRepository {
-  insertMetricType: (name: string, unit: string, schema: string | null) => void;
-  updateMetricTypeSchema: (name: string, schema: string) => void;
-  getMetricTypeId: (name: string) => number;
-  insertHealthMetric: (typeId: number, date: string, data: string) => void;
-  insertWorkoutType: (name: string, schema: string | null) => void;
-  updateWorkoutTypeSchema: (name: string, schema: string) => void;
-  getWorkoutTypeId: (name: string) => number;
-  insertWorkout: (typeId: number, startDate: string, endDate: string, data: string) => void;
-  transaction: <T>(fn: () => T) => T;
-}
-
-export const createHealthDataRepository = (db: Database.Database): HealthDataRepository => {
+export const createHealthDataRepository = (db: Database.Database): HealthDataPort => {
   const insertMetricTypeStmt = db.prepare(
     "INSERT OR IGNORE INTO metric_types (name, unit, schema) VALUES (?, ?, ?)",
   );

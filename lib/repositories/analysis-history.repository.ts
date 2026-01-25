@@ -1,22 +1,10 @@
 import type Database from "better-sqlite3";
-import type {
-  AnalysisRecord,
-  AnalysisType,
-  SaveAnalysisParams,
-} from "../domain/analysis.ts";
-
-export interface AnalysisHistoryRepository {
-  save: (params: SaveAnalysisParams) => number;
-  getByDateAndType: (
-    date: string,
-    type: AnalysisType
-  ) => AnalysisRecord | undefined;
-  getRecentByType: (type: AnalysisType, limit: number) => AnalysisRecord[];
-}
+import type { AnalysisRecord } from "../domain/analysis.ts";
+import type { AnalysisHistoryPort } from "../domain/analysis.port.ts";
 
 export const createAnalysisHistoryRepository = (
   db: Database.Database
-): AnalysisHistoryRepository => {
+): AnalysisHistoryPort => {
   // Upsert: insert or replace on conflict
   const upsertStmt = db.prepare(`
     INSERT INTO analysis_history (date, type, analysis)

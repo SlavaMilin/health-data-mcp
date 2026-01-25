@@ -1,5 +1,6 @@
 import type Database from 'better-sqlite3';
 import type { Goal, GoalStatus, GoalPeriod } from '../domain/goals.ts';
+import type { GoalsQueryPort } from '../domain/goals.port.ts';
 
 interface GoalRow {
   id: number;
@@ -27,13 +28,7 @@ const rowToGoal = (row: GoalRow): Goal => ({
   updated_at: row.updated_at,
 });
 
-export interface GoalsQueryRepository {
-  getById: (id: number) => Goal | undefined;
-  list: (status?: GoalStatus | 'all') => Goal[];
-  getPrimary: () => Goal | undefined;
-}
-
-export const createGoalsQueryRepository = (db: Database.Database): GoalsQueryRepository => {
+export const createGoalsQueryRepository = (db: Database.Database): GoalsQueryPort => {
   const getByIdStmt = db.prepare<[number], GoalRow>('SELECT * FROM goals WHERE id = ?');
 
   const listByStatusStmt = db.prepare<[string], GoalRow>(

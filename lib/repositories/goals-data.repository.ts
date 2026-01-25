@@ -1,15 +1,9 @@
 import type Database from 'better-sqlite3';
 import type { CreateGoalParams, Goal } from '../domain/goals.ts';
+import type { GoalsDataPort } from '../domain/goals.port.ts';
 import { GOAL_STATUS } from '../domain/goals.constants.ts';
 
-export interface GoalsDataRepository {
-  create: (params: CreateGoalParams) => number;
-  update: (goal: Goal) => void;
-  clearPrimary: () => void;
-  transaction: <T>(fn: () => T) => T;
-}
-
-export const createGoalsDataRepository = (db: Database.Database): GoalsDataRepository => {
+export const createGoalsDataRepository = (db: Database.Database): GoalsDataPort => {
   const insertStmt = db.prepare(`
     INSERT INTO goals (title, description, deadline, period, metrics, status, is_primary)
     VALUES (?, ?, ?, ?, ?, ?, ?)

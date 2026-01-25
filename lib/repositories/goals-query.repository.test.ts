@@ -1,13 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
-import { createGoalsQueryRepository, type GoalsQueryRepository } from './goals-query.repository.ts';
+import { createGoalsQueryRepository } from './goals-query.repository.ts';
 import { runMigrations } from '../infrastructure/migrations.ts';
 import { MIGRATIONS_DIR } from '../constants/paths.constants.ts';
 import { GOAL_STATUS } from '../domain/goals.constants.ts';
+import type { GoalsQueryPort } from '../domain/goals.port.ts';
 
 describe('GoalsQueryRepository', () => {
   let db: Database.Database;
-  let repo: GoalsQueryRepository;
+  let repo: GoalsQueryPort;
 
   const insertGoal = (data: { title: string; status?: string; is_primary?: number }) => {
     const stmt = db.prepare('INSERT INTO goals (title, status, is_primary) VALUES (?, ?, ?)');
@@ -53,7 +54,7 @@ describe('GoalsQueryRepository', () => {
     it('should filter by status', () => {
       const active = repo.list(GOAL_STATUS.ACTIVE);
       expect(active).toHaveLength(2);
-      expect(active.every((g) => g.status === GOAL_STATUS.ACTIVE)).toBe(true);
+      expect(active.every((g: { status: string }) => g.status === GOAL_STATUS.ACTIVE)).toBe(true);
     });
 
     it('should order by is_primary DESC', () => {

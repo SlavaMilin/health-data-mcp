@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createGoalsService, type GoalsService } from './goals.service.ts';
-import type { GoalsQueryRepository } from '../repositories/goals-query.repository.ts';
-import type { GoalsDataRepository } from '../repositories/goals-data.repository.ts';
+import type { GoalsQueryPort, GoalsDataPort } from '../domain/goals.port.ts';
 import { GOAL_STATUS, GOAL_PERIOD, METRIC_DIRECTION } from '../domain/goals.constants.ts';
 import type { Goal } from '../domain/goals.ts';
 
@@ -21,8 +20,8 @@ const makeGoal = (overrides: Partial<Goal> = {}): Goal => ({
 
 describe('GoalsService', () => {
   let service: GoalsService;
-  let mockQueryRepo: GoalsQueryRepository;
-  let mockDataRepo: GoalsDataRepository;
+  let mockQueryRepo: GoalsQueryPort;
+  let mockDataRepo: GoalsDataPort;
 
   beforeEach(() => {
     mockQueryRepo = {

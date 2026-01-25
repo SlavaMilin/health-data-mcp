@@ -51,56 +51,57 @@ Config → Domain → Repositories → Clients → Services → Handlers → Rou
 
 1. **Domain** (`lib/domain/`)
    - Business entities, value objects, and constants
+   - Ports (interfaces for dependencies) — `*.port.ts`
    - No dependencies on other layers (pure domain logic)
    - All other layers import from domain
-   - Files: `*.ts` for entities/types, `*.constants.ts` for constants
+   - Files: `*.ts` for entities/types, `*.constants.ts` for constants, `*.port.ts` for ports
 
 2. **Repositories** (`lib/repositories/*.repository.ts`)
    - Data access ONLY (files, Keyv, Map, Database)
    - Use closures for state management (no classes)
-   - Export factory functions that return objects with methods
+   - Export factory functions that return port types (e.g., `GoalsQueryPort`)
    - Define internal Row types (DB format), return domain types
 
-2. **Clients** (`lib/clients/*.client.ts`)
+3. **Clients** (`lib/clients/*.client.ts`)
    - HTTP access to external APIs (Telegram, Gemini, etc.)
    - Thin wrappers around API calls
    - No business logic - just API communication
 
-3. **Services** (`lib/services/*.service.ts`)
+4. **Services** (`lib/services/*.service.ts`)
    - Business logic ONLY
-   - Accept primitive types, DTOs, and domain objects
+   - Dependencies defined via port interfaces from domain
    - Orchestrate multiple repositories and clients
    - No direct data access
    - **NEVER** accept framework objects (request, reply)
 
-4. **Handlers** (`lib/handlers/*.handler.ts`)
+5. **Handlers** (`lib/handlers/*.handler.ts`)
    - Transport layer - handle request/response formatting
    - **HTTP handlers**: Accept FastifyRequest and FastifyReply
    - **MCP handlers**: Accept tool args, return McpToolResponse
    - Parse request data, call services, format responses
    - Validation and error mapping
 
-5. **Schemas** (`lib/schemas/*.schemas.ts`)
+6. **Schemas** (`lib/schemas/*.schemas.ts`)
    - Zod schemas for validation
    - Tool/endpoint descriptions and metadata
    - Kept separate from routes for cleaner code
 
-6. **Routes** (`lib/routes/*.routes.ts`)
+7. **Routes** (`lib/routes/*.routes.ts`)
    - Very thin layer - ONLY register routes/tools
    - **HTTP routes**: `fastify.get('/path', handler)`
    - **MCP routes**: `server.registerTool('name', schema, handler)`
    - No logic, no parsing, no formatting
 
-7. **Middleware** (`lib/middleware/*.middleware.ts`)
+8. **Middleware** (`lib/middleware/*.middleware.ts`)
    - Return factory functions for middleware
    - Injected dependencies via closures
 
-8. **Infrastructure** (`lib/infrastructure/*.ts`)
+9. **Infrastructure** (`lib/infrastructure/*.ts`)
    - Low-level utilities (database migrations, MCP client setup, logger)
    - Not business logic, not services
    - Simple functions with explicit dependencies
 
-9. **Utils** (`lib/utils/*.utils.ts`)
+10. **Utils** (`lib/utils/*.utils.ts`)
    - Pure utility functions (text splitting, date calculations)
    - No side effects, no dependencies
    - Easily testable
@@ -301,6 +302,7 @@ Health data is imported from Auto Export iOS app JSON format:
 ## File Naming Conventions
 
 - `lib/domain/*.ts` - Domain entities and types (goals.ts, health.ts, analysis.ts)
+- `lib/domain/*.port.ts` - Port interfaces for dependencies (goals.port.ts, health.port.ts)
 - `lib/domain/*.constants.ts` - Domain constants (goals.constants.ts, analysis.constants.ts)
 - `*.repository.ts` - Data access layer (DB, files, cache)
 - `*.client.ts` - External API clients (Telegram, Gemini)

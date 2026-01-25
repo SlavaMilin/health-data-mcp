@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
-import { createHealthDataRepository, type HealthDataRepository } from './health-data.repository.ts';
+import { createHealthDataRepository } from './health-data.repository.ts';
 import { runMigrations } from '../infrastructure/migrations.ts';
 import { MIGRATIONS_DIR } from '../constants/paths.constants.ts';
+import type { HealthDataPort } from '../domain/health.port.ts';
 
 interface MetricTypeRow {
   id: number;
@@ -38,7 +39,7 @@ interface CountRow {
 
 describe('HealthDataRepository', () => {
   let db: Database.Database;
-  let repo: HealthDataRepository;
+  let repo: HealthDataPort;
 
   beforeEach(async () => {
     db = new Database(':memory:');

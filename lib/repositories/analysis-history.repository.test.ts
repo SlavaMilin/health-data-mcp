@@ -1,17 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import Database from "better-sqlite3";
-import {
-  createAnalysisHistoryRepository,
-  type AnalysisHistoryRepository,
-} from "./analysis-history.repository.ts";
+import { createAnalysisHistoryRepository } from "./analysis-history.repository.ts";
 import { runMigrations } from "../infrastructure/migrations.ts";
 import { MIGRATIONS_DIR } from "../constants/paths.constants.ts";
 import { ANALYSIS_TYPE } from "../domain/analysis.constants.ts";
+import type { AnalysisHistoryPort } from "../domain/analysis.port.ts";
 import type { AnalysisRecord } from "../domain/analysis.ts";
 
 describe("AnalysisHistoryRepository", () => {
   let db: Database.Database;
-  let repo: AnalysisHistoryRepository;
+  let repo: AnalysisHistoryPort;
 
   const getAnalysis = (
     date: string,

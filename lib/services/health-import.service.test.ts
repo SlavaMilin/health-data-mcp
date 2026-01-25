@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { FastifyBaseLogger } from 'fastify';
 import { createHealthImportService, type HealthImportService } from './health-import.service.ts';
-import type { HealthDataRepository } from '../repositories/health-data.repository.ts';
+import type { HealthDataPort } from '../domain/health.port.ts';
 import type { HealthImportData } from '../types/health-data.types.ts';
 
 describe('HealthImportService', () => {
   let healthImportService: HealthImportService;
-  let mockRepo: HealthDataRepository;
+  let mockRepo: HealthDataPort;
   let mockLogger: FastifyBaseLogger;
 
   beforeEach(() => {

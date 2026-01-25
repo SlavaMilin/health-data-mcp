@@ -1,6 +1,5 @@
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import type { AnalysisHistoryRepository } from "../repositories/analysis-history.repository.ts";
-import type { InstructionsRepository } from "../repositories/instructions.repository.ts";
+import type { AnalysisHistoryPort, InstructionsPort } from "../domain/analysis.port.ts";
 import type { TelegramService } from "./telegram.service.ts";
 import type { GeminiClient } from "../types/gemini.types.ts";
 import type { AnalysisType } from "../domain/analysis.ts";
@@ -14,8 +13,8 @@ export interface HealthAnalysisService {
 export interface HealthAnalysisServiceDeps {
   geminiClient: GeminiClient;
   telegramService: TelegramService;
-  analysisHistoryRepo: AnalysisHistoryRepository;
-  instructionsRepo: InstructionsRepository;
+  analysisHistoryRepo: AnalysisHistoryPort;
+  instructionsRepo: InstructionsPort;
   mcpClient: Client;
   timezone: string;
 }

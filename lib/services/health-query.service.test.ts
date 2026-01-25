@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createHealthQueryService, type HealthQueryService } from './health-query.service.ts';
-import type { HealthQueryRepository } from '../repositories/health-query.repository.ts';
+import type { HealthQueryPort } from '../domain/health.port.ts';
 
 describe('HealthQueryService', () => {
   let service: HealthQueryService;
-  let mockRepo: HealthQueryRepository;
+  let mockRepo: HealthQueryPort;
 
   beforeEach(() => {
     mockRepo = {
