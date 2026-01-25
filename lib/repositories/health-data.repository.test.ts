@@ -3,13 +3,38 @@ import Database from 'better-sqlite3';
 import { createHealthDataRepository, type HealthDataRepository } from './health-data.repository.ts';
 import { runMigrations } from '../infrastructure/migrations.ts';
 import { MIGRATIONS_DIR } from '../constants/paths.constants.ts';
-import type {
-  MetricTypeRow,
-  HealthMetricRow,
-  WorkoutTypeRow,
-  WorkoutRow,
-  CountRow,
-} from '../types/health-data.types.ts';
+
+interface MetricTypeRow {
+  id: number;
+  name: string;
+  unit: string;
+  schema: string;
+}
+
+interface HealthMetricRow {
+  id: number;
+  type_id: number;
+  date: string;
+  data: string;
+}
+
+interface WorkoutTypeRow {
+  id: number;
+  name: string;
+  schema: string;
+}
+
+interface WorkoutRow {
+  id: number;
+  type_id: number;
+  start_date: string;
+  end_date: string;
+  data: string;
+}
+
+interface CountRow {
+  count: number;
+}
 
 describe('HealthDataRepository', () => {
   let db: Database.Database;

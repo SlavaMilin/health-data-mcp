@@ -1,6 +1,6 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import type { HealthImportService } from "../services/health-import.service.ts";
-import type { HealthImportResult } from "../types/health-data.types.ts";
+import type { HealthImportResult } from "../domain/health.ts";
 import { healthImportSchema } from "../schemas/health-import.schemas.ts";
 
 interface HealthImportSuccessResponse extends HealthImportResult {

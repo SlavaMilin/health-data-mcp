@@ -13,3 +13,14 @@ export interface JsonRpcError {
   };
   id: string | number | null;
 }
+
+export interface McpTextContent {
+  type: 'text';
+  text: string;
+}
+
+export interface McpToolResponse {
+  [key: string]: unknown;
+  content: McpTextContent[];
+  isError?: boolean;
+}

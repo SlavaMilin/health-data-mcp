@@ -44,15 +44,22 @@ This project follows a **layered architecture with Go-style dependency injection
 
 ### Dependency Flow (Top to Bottom)
 ```
-Config → Repositories → Clients → Services → Handlers → Routes
+Config → Domain → Repositories → Clients → Services → Handlers → Routes
 ```
 
 ### Layer Responsibilities
 
-1. **Repositories** (`lib/repositories/*.repository.ts`)
+1. **Domain** (`lib/domain/`)
+   - Business entities, value objects, and constants
+   - No dependencies on other layers (pure domain logic)
+   - All other layers import from domain
+   - Files: `*.ts` for entities/types, `*.constants.ts` for constants
+
+2. **Repositories** (`lib/repositories/*.repository.ts`)
    - Data access ONLY (files, Keyv, Map, Database)
    - Use closures for state management (no classes)
    - Export factory functions that return objects with methods
+   - Define internal Row types (DB format), return domain types
 
 2. **Clients** (`lib/clients/*.client.ts`)
    - HTTP access to external APIs (Telegram, Gemini, etc.)
@@ -220,7 +227,8 @@ The server uses pre-joined views for efficient queries:
 - Uses `tsx` runtime (no build step required)
 - Type checking with `pnpm typecheck`
 - Direct `.ts` imports in all files
-- Types in `lib/types/*.types.ts`
+- Domain types in `lib/domain/` (business entities)
+- Infrastructure types in `lib/types/*.types.ts` (OAuth, MCP, import schemas)
 - Use `type` imports when importing only types
 - Gradual typing is acceptable (can use `any` when needed)
 
@@ -292,6 +300,8 @@ Health data is imported from Auto Export iOS app JSON format:
 
 ## File Naming Conventions
 
+- `lib/domain/*.ts` - Domain entities and types (goals.ts, health.ts, analysis.ts)
+- `lib/domain/*.constants.ts` - Domain constants (goals.constants.ts, analysis.constants.ts)
 - `*.repository.ts` - Data access layer (DB, files, cache)
 - `*.client.ts` - External API clients (Telegram, Gemini)
 - `*.service.ts` - Business logic layer
@@ -299,8 +309,8 @@ Health data is imported from Auto Export iOS app JSON format:
 - `*.schemas.ts` - Zod schemas and metadata
 - `*.routes.ts` - Route/tool registration (thin layer)
 - `*.middleware.ts` - Middleware factories
-- `*.constants.ts` - Constants and configuration
-- `*.types.ts` - TypeScript type definitions
+- `*.constants.ts` - Infrastructure constants (keyv, paths)
+- `*.types.ts` - Infrastructure type definitions (OAuth, MCP)
 - `*.utils.ts` - Pure utility functions
 - `*.test.ts` - Unit tests (no server)
 - `*.integration.test.ts` - Integration tests (auto-start server)
@@ -315,7 +325,7 @@ Health data is imported from Auto Export iOS app JSON format:
 
 1. **New files**: Write tests immediately after creating any new file
    - ✅ Repositories, Services, Handlers, Middleware, Utils
-   - ❌ Skip: Constants, Types, Schemas, Routes, Clients (too thin to test)
+   - ❌ Skip: Domain, Constants, Types, Schemas, Routes, Clients (too thin to test)
 
 2. **Modified files**: Update or add tests when changing code
    - Modified functions/methods: Update existing tests

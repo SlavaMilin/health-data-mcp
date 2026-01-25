@@ -1,5 +1,8 @@
 import type Database from 'better-sqlite3';
-import type { IdRow } from '../types/health-data.types.ts';
+
+interface IdRow {
+  id: number;
+}
 
 export interface HealthDataRepository {
   insertMetricType: (name: string, unit: string, schema: string | null) => void;

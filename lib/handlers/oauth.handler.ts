@@ -40,7 +40,7 @@ export const createOAuthHandler = (deps: OAuthHandlerDeps): OAuthHandler => {
     }),
 
     handleProtectedResourceMetadata: () => ({
-      resource: baseUrl,
+      resource: `${baseUrl}/sse`,
       authorization_servers: [baseUrl],
       ...oauthService.getMetadata(),
     }),

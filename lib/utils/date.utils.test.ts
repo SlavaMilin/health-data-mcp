@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { calculatePeriodDate } from "./date.utils.ts";
-import { ANALYSIS_TYPE } from "../constants/analysis.constants.ts";
+import { ANALYSIS_TYPE } from "../domain/analysis.constants.ts";
 
 describe("calculatePeriodDate", () => {
   afterEach(() => {

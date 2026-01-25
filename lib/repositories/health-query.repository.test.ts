@@ -18,7 +18,7 @@ describe('HealthQueryRepository', () => {
     repo = createHealthQueryRepository(db);
   });
 
-  describe('metric types', () => {
+  describe('listMetricTypes', () => {
     beforeEach(() => {
       const dataRepo = createHealthDataRepository(db);
       dataRepo.insertMetricType('step_count', 'count', '["date", "qty", "source"]');
@@ -29,46 +29,52 @@ describe('HealthQueryRepository', () => {
       dataRepo.insertHealthMetric(stepTypeId, '2024-01-02 10:00:00', JSON.stringify({ date: '2024-01-02', qty: 12000, source: 'iPhone' }));
     });
 
-    it('should get all metric types', () => {
-      const types = repo.getMetricTypes();
+    it('should return enriched metric types', () => {
+      const types = repo.listMetricTypes();
 
       expect(types).toHaveLength(2);
-      expect(types[0]).toMatchObject({ name: 'heart_rate', unit: 'bpm' });
-      expect(types[1]).toMatchObject({ name: 'step_count', unit: 'count' });
-    });
-
-    it('should get metric metadata', () => {
-      const metadata = repo.getMetricMetadata('step_count');
-
-      expect(metadata).toMatchObject({
+      expect(types[1]).toMatchObject({
+        name: 'step_count',
+        unit: 'count',
+        schema: ['date', 'qty', 'source'],
         count: 2,
-        min_date: '2024-01-01 10:00:00',
-        max_date: '2024-01-02 10:00:00',
       });
     });
 
-    it('should return zero count for metric without data', () => {
-      const metadata = repo.getMetricMetadata('heart_rate');
+    it('should include date_range for metrics with data', () => {
+      const types = repo.listMetricTypes();
+      const stepCount = types.find(t => t.name === 'step_count');
 
-      expect(metadata?.count).toBe(0);
+      expect(stepCount?.date_range).toMatchObject({
+        min: '2024-01-01 10:00:00',
+        max: '2024-01-02 10:00:00',
+      });
     });
 
-    it('should get metric example', () => {
-      const example = repo.getMetricExample('step_count');
+    it('should return null date_range for metrics without data', () => {
+      const types = repo.listMetricTypes();
+      const heartRate = types.find(t => t.name === 'heart_rate');
 
-      expect(example).toBeDefined();
-      const data = JSON.parse(example!.data);
-      expect(data).toMatchObject({ date: '2024-01-01', qty: 10000, source: 'iPhone' });
+      expect(heartRate?.count).toBe(0);
+      expect(heartRate?.date_range).toBeNull();
     });
 
-    it('should return undefined for metric without example', () => {
-      const example = repo.getMetricExample('heart_rate');
+    it('should include example for metrics with data', () => {
+      const types = repo.listMetricTypes();
+      const stepCount = types.find(t => t.name === 'step_count');
 
-      expect(example).toBeUndefined();
+      expect(stepCount?.example).toMatchObject({ date: '2024-01-01', qty: 10000, source: 'iPhone' });
+    });
+
+    it('should return null example for metrics without data', () => {
+      const types = repo.listMetricTypes();
+      const heartRate = types.find(t => t.name === 'heart_rate');
+
+      expect(heartRate?.example).toBeNull();
     });
   });
 
-  describe('workout types', () => {
+  describe('listWorkoutTypes', () => {
     beforeEach(() => {
       const dataRepo = createHealthDataRepository(db);
       dataRepo.insertWorkoutType('Running', '["name", "duration"]');
@@ -78,28 +84,33 @@ describe('HealthQueryRepository', () => {
       dataRepo.insertWorkout(runningTypeId, '2024-01-01 08:00:00', '2024-01-01 08:30:00', JSON.stringify({ name: 'Running', duration: 30 }));
     });
 
-    it('should get all workout types', () => {
-      const types = repo.getWorkoutTypes();
+    it('should return enriched workout types', () => {
+      const types = repo.listWorkoutTypes();
 
       expect(types).toHaveLength(2);
-      expect(types[0]).toMatchObject({ name: 'Running' });
-      expect(types[1]).toMatchObject({ name: 'Walking' });
-    });
-
-    it('should get workout metadata', () => {
-      const metadata = repo.getWorkoutMetadata('Running');
-
-      expect(metadata).toMatchObject({
+      expect(types[0]).toMatchObject({
+        name: 'Running',
+        schema: ['name', 'duration'],
         count: 1,
-        min_date: '2024-01-01 08:00:00',
-        max_date: '2024-01-01 08:00:00',
       });
     });
 
-    it('should return zero count for workout type without data', () => {
-      const metadata = repo.getWorkoutMetadata('Walking');
+    it('should include date_range for workout types with data', () => {
+      const types = repo.listWorkoutTypes();
+      const running = types.find(t => t.name === 'Running');
 
-      expect(metadata?.count).toBe(0);
+      expect(running?.date_range).toMatchObject({
+        min: '2024-01-01 08:00:00',
+        max: '2024-01-01 08:00:00',
+      });
+    });
+
+    it('should return null date_range for workout types without data', () => {
+      const types = repo.listWorkoutTypes();
+      const walking = types.find(t => t.name === 'Walking');
+
+      expect(walking?.count).toBe(0);
+      expect(walking?.date_range).toBeNull();
     });
   });
 

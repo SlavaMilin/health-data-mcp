@@ -1,5 +1,5 @@
 import cron, { type ScheduledTask } from "node-cron";
-import type { AnalysisType } from "../types/analysis.types.ts";
+import type { AnalysisType } from "../domain/analysis.ts";
 import type { Logger } from "../types/logger.types.ts";
 
 export interface SchedulerService {

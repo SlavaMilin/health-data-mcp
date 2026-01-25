@@ -3,7 +3,7 @@ import type {
   AnalysisRecord,
   AnalysisType,
   SaveAnalysisParams,
-} from "../types/analysis.types.ts";
+} from "../domain/analysis.ts";
 
 export interface AnalysisHistoryRepository {
   save: (params: SaveAnalysisParams) => number;

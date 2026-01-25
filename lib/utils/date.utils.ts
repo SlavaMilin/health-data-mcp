@@ -1,5 +1,5 @@
-import type { AnalysisType } from "../types/analysis.types.ts";
-import { ANALYSIS_TYPE } from "../constants/analysis.constants.ts";
+import type { AnalysisType } from "../domain/analysis.ts";
+import { ANALYSIS_TYPE } from "../domain/analysis.constants.ts";
 
 export interface PeriodInfo {
   date: string;

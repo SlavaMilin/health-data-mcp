@@ -7,7 +7,8 @@ import { createHealthImportService } from "./services/health-import.service.ts";
 import { runMigrations } from "./infrastructure/migrations.ts";
 import { createConsoleLogger } from "./infrastructure/logger.ts";
 import { MIGRATIONS_DIR, DEFAULT_DB_PATH } from "./constants/paths.constants.ts";
-import type { HealthImportData, HealthImportResult } from "./types/health-data.types.ts";
+import type { HealthImportData } from "./types/health-data.types.ts";
+import type { HealthImportResult } from "./domain/health.ts";
 
 export const runImport = async (
   jsonData: HealthImportData,

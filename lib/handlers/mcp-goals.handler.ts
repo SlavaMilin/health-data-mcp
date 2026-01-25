@@ -1,6 +1,6 @@
 import type { GoalsService } from '../services/goals.service.ts';
-import type { McpToolResponse } from '../types/health-query.types.ts';
-import type { CreateGoalParams, UpdateGoalParams, ListGoalsFilter, Goal } from '../types/goals.types.ts';
+import type { McpToolResponse } from '../types/mcp.types.ts';
+import type { CreateGoalParams, UpdateGoalParams, ListGoalsFilter, Goal } from '../domain/goals.ts';
 
 export interface McpGoalsHandler {
   create: (args: CreateGoalParams) => McpToolResponse;

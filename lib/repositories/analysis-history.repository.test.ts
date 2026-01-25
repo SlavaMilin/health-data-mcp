@@ -6,8 +6,8 @@ import {
 } from "./analysis-history.repository.ts";
 import { runMigrations } from "../infrastructure/migrations.ts";
 import { MIGRATIONS_DIR } from "../constants/paths.constants.ts";
-import { ANALYSIS_TYPE } from "../constants/analysis.constants.ts";
-import type { AnalysisRecord } from "../types/analysis.types.ts";
+import { ANALYSIS_TYPE } from "../domain/analysis.constants.ts";
+import type { AnalysisRecord } from "../domain/analysis.ts";
 
 describe("AnalysisHistoryRepository", () => {
   let db: Database.Database;

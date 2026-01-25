@@ -1,27 +1,55 @@
 import type Database from 'better-sqlite3';
 import type {
-  MetricTypeRow,
-  MetricMetadataRow,
-  MetricExampleRow,
-  WorkoutTypeRow,
-  WorkoutMetadataRow,
   QueryMetricsParams,
   SchemaInfo,
-  AnalysisHistoryRow,
-  GetAnalysisHistoryParams,
-} from '../types/health-query.types.ts';
+  EnrichedMetricType,
+  EnrichedWorkoutType,
+} from '../domain/health.ts';
+import type { AnalysisRecord, GetAnalysisHistoryParams } from '../domain/analysis.ts';
+
+interface MetricTypeRow {
+  name: string;
+  unit: string;
+  schema: string | null;
+}
+
+interface MetricMetadataRow {
+  count: number;
+  min_date: string | null;
+  max_date: string | null;
+}
+
+interface MetricExampleRow {
+  data: string;
+}
+
+interface WorkoutTypeRow {
+  name: string;
+  schema: string | null;
+}
+
+interface WorkoutMetadataRow {
+  count: number;
+  min_date: string | null;
+  max_date: string | null;
+}
+
+interface AnalysisHistoryRow {
+  id: number;
+  date: string;
+  type: string;
+  analysis: string;
+  created_at: string;
+}
 
 export interface HealthQueryRepository {
-  getMetricTypes: () => MetricTypeRow[];
-  getMetricMetadata: (name: string) => MetricMetadataRow | undefined;
-  getMetricExample: (name: string) => MetricExampleRow | undefined;
-  getWorkoutTypes: () => WorkoutTypeRow[];
-  getWorkoutMetadata: (name: string) => WorkoutMetadataRow | undefined;
+  listMetricTypes: () => EnrichedMetricType[];
+  listWorkoutTypes: () => EnrichedWorkoutType[];
   queryMetricsRaw: (params: QueryMetricsParams) => unknown[];
   queryMetricsAggregated: (params: QueryMetricsParams) => unknown[];
   executeSQL: (query: string) => unknown[];
   getSchemaInfo: () => SchemaInfo;
-  getAnalysisHistory: (params: GetAnalysisHistoryParams) => AnalysisHistoryRow[];
+  getAnalysisHistory: (params: GetAnalysisHistoryParams) => AnalysisRecord[];
 }
 
 export const createHealthQueryRepository = (db: Database.Database): HealthQueryRepository => {
@@ -53,16 +81,49 @@ export const createHealthQueryRepository = (db: Database.Database): HealthQueryR
     WHERE wt.name = ?
   `);
 
+  const enrichMetricType = (type: MetricTypeRow): EnrichedMetricType => {
+    const metadata = getMetricMetadataStmt.get(type.name);
+    const exampleRow = getMetricExampleStmt.get(type.name);
+
+    return {
+      name: type.name,
+      unit: type.unit,
+      schema: JSON.parse(type.schema || '[]'),
+      count: metadata?.count ?? 0,
+      date_range:
+        metadata && metadata.count > 0
+          ? { min: metadata.min_date, max: metadata.max_date }
+          : null,
+      example: exampleRow ? JSON.parse(exampleRow.data) : null,
+    };
+  };
+
+  const enrichWorkoutType = (type: WorkoutTypeRow): EnrichedWorkoutType => {
+    const metadata = getWorkoutMetadataStmt.get(type.name);
+
+    return {
+      name: type.name,
+      schema: JSON.parse(type.schema || '[]'),
+      count: metadata?.count ?? 0,
+      date_range:
+        metadata && metadata.count > 0
+          ? { min: metadata.min_date, max: metadata.max_date }
+          : null,
+    };
+  };
+
+  const rowToAnalysisRecord = (row: AnalysisHistoryRow): AnalysisRecord => ({
+    id: row.id,
+    date: row.date,
+    type: row.type as AnalysisRecord['type'],
+    analysis: row.analysis,
+    created_at: row.created_at,
+  });
+
   return {
-    getMetricTypes: () => getMetricTypesStmt.all(),
+    listMetricTypes: () => getMetricTypesStmt.all().map(enrichMetricType),
 
-    getMetricMetadata: (name) => getMetricMetadataStmt.get(name),
-
-    getMetricExample: (name) => getMetricExampleStmt.get(name),
-
-    getWorkoutTypes: () => getWorkoutTypesStmt.all(),
-
-    getWorkoutMetadata: (name) => getWorkoutMetadataStmt.get(name),
+    listWorkoutTypes: () => getWorkoutTypesStmt.all().map(enrichWorkoutType),
 
     queryMetricsRaw: (params) => {
       const { metric_name, start_date, end_date, limit = 100 } = params;
@@ -151,7 +212,8 @@ export const createHealthQueryRepository = (db: Database.Database): HealthQueryR
       query += ' ORDER BY date DESC LIMIT ?';
       queryParams.push(limit);
 
-      return db.prepare(query).all(...queryParams) as AnalysisHistoryRow[];
+      const rows = db.prepare(query).all(...queryParams) as AnalysisHistoryRow[];
+      return rows.map(rowToAnalysisRecord);
     },
   };
 };

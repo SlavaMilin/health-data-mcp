@@ -3,8 +3,20 @@ import Database from 'better-sqlite3';
 import { createGoalsDataRepository, type GoalsDataRepository } from './goals-data.repository.ts';
 import { runMigrations } from '../infrastructure/migrations.ts';
 import { MIGRATIONS_DIR } from '../constants/paths.constants.ts';
-import { GOAL_STATUS, GOAL_PERIOD, METRIC_DIRECTION } from '../constants/goals.constants.ts';
-import type { GoalRow } from '../types/goals.types.ts';
+import { GOAL_STATUS, GOAL_PERIOD, METRIC_DIRECTION } from '../domain/goals.constants.ts';
+
+interface GoalRow {
+  id: number;
+  title: string;
+  description: string | null;
+  deadline: string | null;
+  period: string | null;
+  metrics: string | null;
+  status: string;
+  is_primary: number;
+  created_at: string;
+  updated_at: string;
+}
 
 describe('GoalsDataRepository', () => {
   let db: Database.Database;

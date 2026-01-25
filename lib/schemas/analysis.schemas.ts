@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ANALYSIS_TYPE } from "../constants/analysis.constants.ts";
+import { ANALYSIS_TYPE } from "../domain/analysis.constants.ts";
 
 export const runAnalysisQuerySchema = z.object({
   type: z

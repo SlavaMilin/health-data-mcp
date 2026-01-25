@@ -2,18 +2,18 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createGoalsService, type GoalsService } from './goals.service.ts';
 import type { GoalsQueryRepository } from '../repositories/goals-query.repository.ts';
 import type { GoalsDataRepository } from '../repositories/goals-data.repository.ts';
-import { GOAL_STATUS, GOAL_PERIOD, METRIC_DIRECTION } from '../constants/goals.constants.ts';
-import type { GoalRow } from '../types/goals.types.ts';
+import { GOAL_STATUS, GOAL_PERIOD, METRIC_DIRECTION } from '../domain/goals.constants.ts';
+import type { Goal } from '../domain/goals.ts';
 
-const makeGoalRow = (overrides: Partial<GoalRow> = {}): GoalRow => ({
+const makeGoal = (overrides: Partial<Goal> = {}): Goal => ({
   id: 1,
   title: 'Test Goal',
   description: null,
   deadline: null,
   period: null,
-  metrics: null,
+  metrics: [],
   status: GOAL_STATUS.ACTIVE,
-  is_primary: 0,
+  is_primary: false,
   created_at: '2026-01-01 00:00:00',
   updated_at: '2026-01-01 00:00:00',
   ...overrides,
@@ -71,7 +71,7 @@ describe('GoalsService', () => {
     });
 
     it('should merge params with existing goal', () => {
-      mockQueryRepo.getById = vi.fn(() => makeGoalRow({ title: 'Original', description: 'Keep me' }));
+      mockQueryRepo.getById = vi.fn(() => makeGoal({ title: 'Original', description: 'Keep me' }));
 
       service.update(1, { title: 'Updated' });
 
@@ -81,7 +81,7 @@ describe('GoalsService', () => {
     });
 
     it('should allow setting description to null', () => {
-      mockQueryRepo.getById = vi.fn(() => makeGoalRow({ description: 'Has description' }));
+      mockQueryRepo.getById = vi.fn(() => makeGoal({ description: 'Has description' }));
 
       service.update(1, { description: null });
 
@@ -89,7 +89,7 @@ describe('GoalsService', () => {
     });
 
     it('should clear primary when setting new primary', () => {
-      mockQueryRepo.getById = vi.fn(() => makeGoalRow({ is_primary: 0 }));
+      mockQueryRepo.getById = vi.fn(() => makeGoal({ is_primary: false }));
 
       service.update(1, { is_primary: true });
 
@@ -98,7 +98,7 @@ describe('GoalsService', () => {
     });
 
     it('should not clear primary if already primary', () => {
-      mockQueryRepo.getById = vi.fn(() => makeGoalRow({ is_primary: 1 }));
+      mockQueryRepo.getById = vi.fn(() => makeGoal({ is_primary: true }));
 
       service.update(1, { is_primary: true });
 
@@ -109,8 +109,8 @@ describe('GoalsService', () => {
       // First call returns original, second call returns updated (simulating DB state after update)
       mockQueryRepo.getById = vi
         .fn()
-        .mockReturnValueOnce(makeGoalRow())
-        .mockReturnValueOnce(makeGoalRow({ title: 'Updated', status: GOAL_STATUS.COMPLETED }));
+        .mockReturnValueOnce(makeGoal())
+        .mockReturnValueOnce(makeGoal({ title: 'Updated', status: GOAL_STATUS.COMPLETED }));
 
       const result = service.update(1, { title: 'Updated', status: GOAL_STATUS.COMPLETED });
 
@@ -122,8 +122,8 @@ describe('GoalsService', () => {
   describe('list', () => {
     it('should return goals converted from rows', () => {
       mockQueryRepo.list = vi.fn(() => [
-        makeGoalRow({ id: 1, title: 'Goal 1' }),
-        makeGoalRow({ id: 2, title: 'Goal 2' }),
+        makeGoal({ id: 1, title: 'Goal 1' }),
+        makeGoal({ id: 2, title: 'Goal 2' }),
       ]);
 
       const result = service.list();
@@ -138,17 +138,17 @@ describe('GoalsService', () => {
       expect(mockQueryRepo.list).toHaveBeenCalledWith(GOAL_STATUS.COMPLETED);
     });
 
-    it('should parse metrics JSON', () => {
+    it('should return metrics as-is from repository', () => {
       const metrics = [{ metric_name: 'steps', target: 10000, direction: METRIC_DIRECTION.INCREASE }];
-      mockQueryRepo.list = vi.fn(() => [makeGoalRow({ metrics: JSON.stringify(metrics) })]);
+      mockQueryRepo.list = vi.fn(() => [makeGoal({ metrics })]);
 
       const result = service.list();
 
       expect(result[0].metrics).toEqual(metrics);
     });
 
-    it('should convert is_primary to boolean', () => {
-      mockQueryRepo.list = vi.fn(() => [makeGoalRow({ is_primary: 1 })]);
+    it('should return is_primary as boolean from repository', () => {
+      mockQueryRepo.list = vi.fn(() => [makeGoal({ is_primary: true })]);
 
       const result = service.list();
 
@@ -164,7 +164,7 @@ describe('GoalsService', () => {
     });
 
     it('should return goal if found', () => {
-      mockQueryRepo.getById = vi.fn(() => makeGoalRow({ title: 'Found' }));
+      mockQueryRepo.getById = vi.fn(() => makeGoal({ title: 'Found' }));
 
       const result = service.getById(1);
 
@@ -180,7 +180,7 @@ describe('GoalsService', () => {
     });
 
     it('should return primary goal', () => {
-      mockQueryRepo.getPrimary = vi.fn(() => makeGoalRow({ title: 'Primary', is_primary: 1 }));
+      mockQueryRepo.getPrimary = vi.fn(() => makeGoal({ title: 'Primary', is_primary: true }));
 
       const result = service.getPrimary();
 

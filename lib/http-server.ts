@@ -19,7 +19,7 @@ import { createHealthImportService } from "./services/health-import.service.ts";
 import { createTelegramService } from "./services/telegram.service.ts";
 import { createHealthAnalysisService } from "./services/health-analysis.service.ts";
 import { createSchedulerService, type ScheduleConfig } from "./services/scheduler.service.ts";
-import { ANALYSIS_TYPE } from "./constants/analysis.constants.ts";
+import { ANALYSIS_TYPE } from "./domain/analysis.constants.ts";
 import { runMigrations } from "./infrastructure/migrations.ts";
 import { createMcpClient } from "./infrastructure/mcp-client.ts";
 import { fromFastifyLogger } from "./infrastructure/logger.ts";

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createMcpGoalsHandler, type McpGoalsHandler } from './mcp-goals.handler.ts';
 import type { GoalsService } from '../services/goals.service.ts';
-import { GOAL_STATUS } from '../constants/goals.constants.ts';
-import type { Goal } from '../types/goals.types.ts';
+import { GOAL_STATUS } from '../domain/goals.constants.ts';
+import type { Goal } from '../domain/goals.ts';
 
 const makeGoal = (overrides: Partial<Goal> = {}): Goal => ({
   id: 1,

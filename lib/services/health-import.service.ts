@@ -1,8 +1,8 @@
 import type { HealthDataRepository } from "../repositories/health-data.repository.ts";
 import type { Logger } from "../types/logger.types.ts";
+import type { HealthImportResult } from "../domain/health.ts";
 import type {
   HealthImportData,
-  HealthImportResult,
   HealthMetricData,
   HealthMetricEntry,
   WorkoutEntry,

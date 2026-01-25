@@ -1,5 +1,7 @@
 import type { HealthQueryService } from '../services/health-query.service.ts';
-import type { McpToolResponse, QueryMetricsParams, SchemaInfo, GetAnalysisHistoryParams } from '../types/health-query.types.ts';
+import type { McpToolResponse } from '../types/mcp.types.ts';
+import type { QueryMetricsParams, SchemaInfo } from '../domain/health.ts';
+import type { GetAnalysisHistoryParams } from '../domain/analysis.ts';
 import { QUERY_PATTERNS, SCHEMA_USAGE } from '../constants/query-patterns.constants.ts';
 
 export interface SchemaResourceResponse extends SchemaInfo {

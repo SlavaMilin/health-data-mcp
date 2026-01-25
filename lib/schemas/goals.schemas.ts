@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { GOAL_STATUS, GOAL_PERIOD, METRIC_DIRECTION } from '../constants/goals.constants.ts';
+import { GOAL_STATUS, GOAL_PERIOD, METRIC_DIRECTION } from '../domain/goals.constants.ts';
 
 type GoalStatusValue = (typeof GOAL_STATUS)[keyof typeof GOAL_STATUS];
 type GoalPeriodValue = (typeof GOAL_PERIOD)[keyof typeof GOAL_PERIOD];

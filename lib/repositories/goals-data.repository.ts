@@ -1,6 +1,6 @@
 import type Database from 'better-sqlite3';
-import type { CreateGoalParams, Goal } from '../types/goals.types.ts';
-import { GOAL_STATUS } from '../constants/goals.constants.ts';
+import type { CreateGoalParams, Goal } from '../domain/goals.ts';
+import { GOAL_STATUS } from '../domain/goals.constants.ts';
 
 export interface GoalsDataRepository {
   create: (params: CreateGoalParams) => number;

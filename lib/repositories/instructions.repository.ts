@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import type { AnalysisType } from "../types/analysis.types.ts";
+import type { AnalysisType } from "../domain/analysis.ts";
 
 export interface InstructionsPaths {
   daily: string;

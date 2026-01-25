@@ -3,8 +3,8 @@ import type { AnalysisHistoryRepository } from "../repositories/analysis-history
 import type { InstructionsRepository } from "../repositories/instructions.repository.ts";
 import type { TelegramService } from "./telegram.service.ts";
 import type { GeminiClient } from "../types/gemini.types.ts";
-import type { AnalysisType } from "../types/analysis.types.ts";
-import { ANALYSIS_TYPE } from "../constants/analysis.constants.ts";
+import type { AnalysisType } from "../domain/analysis.ts";
+import { ANALYSIS_TYPE } from "../domain/analysis.constants.ts";
 import { calculatePeriodDate } from "../utils/date.utils.ts";
 
 export interface HealthAnalysisService {

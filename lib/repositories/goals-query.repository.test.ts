@@ -3,7 +3,7 @@ import Database from 'better-sqlite3';
 import { createGoalsQueryRepository, type GoalsQueryRepository } from './goals-query.repository.ts';
 import { runMigrations } from '../infrastructure/migrations.ts';
 import { MIGRATIONS_DIR } from '../constants/paths.constants.ts';
-import { GOAL_STATUS } from '../constants/goals.constants.ts';
+import { GOAL_STATUS } from '../domain/goals.constants.ts';
 
 describe('GoalsQueryRepository', () => {
   let db: Database.Database;
