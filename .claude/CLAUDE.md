@@ -181,6 +181,11 @@ Available tools:
 - `query_metrics`: Query metrics with filtering and aggregation
 - `list_workout_types`: List workout types
 - `execute_sql`: Run arbitrary SQL queries
+- `log_meal`: Add a meal to nutrition diary
+- `update_meal`: Update an existing meal by ID
+- `delete_meal`: Delete a meal by ID
+- `get_daily_meal_plan`: Get all meals for a date with KBJU totals
+- `generate_apple_shortcut_url`: Generate URL for Apple Shortcut to log nutrition
 
 ### 2. HTTP Server (`lib/http-server.ts`)
 - Used for remote deployment via SSE transport
@@ -267,6 +272,7 @@ The database stores Apple Health data with the following structure:
 - `health_metrics`: Individual metric measurements (linked to metric_types)
 - `workout_types`: Workout type definitions (name, schema)
 - `workouts`: Individual workout sessions (linked to workout_types)
+- `meal_logs`: Nutrition diary entries (date, meal_type, meal_name, calories, protein, fat, carbs)
 - `analysis_history`: AI-generated health analysis history (date, type, analysis)
 - `goals`: User health goals with metric targets
 - Views: `metrics_with_types`, `workouts_with_types` (pre-joined for queries)
