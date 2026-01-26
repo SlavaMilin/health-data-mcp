@@ -13,6 +13,11 @@ import { createGoalsService } from './services/goals.service.ts';
 import { createMcpGoalsHandler } from './handlers/mcp-goals.handler.ts';
 import { registerMcpGoalsTools } from './routes/mcp-goals.routes.ts';
 import { registerMcpGoalsResources } from './routes/mcp-goals-resources.routes.ts';
+import { createNutritionQueryRepository } from './repositories/nutrition-query.repository.ts';
+import { createNutritionDataRepository } from './repositories/nutrition-data.repository.ts';
+import { createNutritionService } from './services/nutrition.service.ts';
+import { createMcpNutritionHandler } from './handlers/mcp-nutrition.handler.ts';
+import { registerMcpNutritionTools } from './routes/mcp-nutrition.routes.ts';
 import { runMigrations } from './infrastructure/migrations.ts';
 import { MIGRATIONS_DIR } from './constants/paths.constants.ts';
 
@@ -60,6 +65,12 @@ export const setupServer = async (deps?: StdioServerDeps) => {
   const goalsService = createGoalsService(goalsQueryRepo, goalsDataRepo);
   const mcpGoalsHandler = createMcpGoalsHandler(goalsService);
 
+  // Nutrition stack (read + write)
+  const nutritionQueryRepo = createNutritionQueryRepository(readDb);
+  const nutritionDataRepo = createNutritionDataRepository(writeDb);
+  const nutritionService = createNutritionService(nutritionQueryRepo, nutritionDataRepo);
+  const mcpNutritionHandler = createMcpNutritionHandler(nutritionService);
+
   const server = new McpServer(
     { name: 'health-data-mcp', version: '1.0.0' },
     { capabilities: { tools: {}, resources: {} } },
@@ -69,6 +80,7 @@ export const setupServer = async (deps?: StdioServerDeps) => {
   registerMcpResources(server, mcpToolsHandler, dbPath);
   registerMcpGoalsTools(server, mcpGoalsHandler);
   registerMcpGoalsResources(server, mcpGoalsHandler);
+  registerMcpNutritionTools(server, mcpNutritionHandler);
 
   return server;
 };
