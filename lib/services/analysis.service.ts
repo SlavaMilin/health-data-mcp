@@ -1,33 +1,39 @@
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { AnalysisHistoryPort, InstructionsPort } from "../domain/analysis.port.ts";
-import type { TelegramService } from "./telegram.service.ts";
 import type { GeminiClient } from "../types/gemini.types.ts";
-import type { AnalysisType } from "../domain/analysis.ts";
+import type { AnalysisType, SaveAnalysisParams, AnalysisRecord } from "../domain/analysis.ts";
 import { ANALYSIS_TYPE } from "../domain/analysis.constants.ts";
 import { calculatePeriodDate } from "../utils/date.utils.ts";
 
-export interface HealthAnalysisService {
-  run: (type?: AnalysisType) => Promise<void>;
+export interface GeneratedAnalysis {
+  date: string;
+  type: AnalysisType;
+  analysis: string;
 }
 
-export interface HealthAnalysisServiceDeps {
+export interface AnalysisService {
+  generate: (type?: AnalysisType) => Promise<GeneratedAnalysis>;
+  save: (params: SaveAnalysisParams) => number;
+  getByDateAndType: (date: string, type: AnalysisType) => AnalysisRecord | undefined;
+  getRecentByType: (type: AnalysisType, limit: number) => AnalysisRecord[];
+}
+
+export interface AnalysisServiceDeps {
   geminiClient: GeminiClient;
-  telegramService: TelegramService;
-  analysisHistoryRepo: AnalysisHistoryPort;
   instructionsRepo: InstructionsPort;
+  analysisHistoryRepo: AnalysisHistoryPort;
   mcpClient: Client;
   timezone: string;
 }
 
-export const createHealthAnalysisService = ({
+export const createAnalysisService = ({
   geminiClient,
-  telegramService,
-  analysisHistoryRepo,
   instructionsRepo,
+  analysisHistoryRepo,
   mcpClient,
   timezone,
-}: HealthAnalysisServiceDeps): HealthAnalysisService => ({
-  run: async (type = ANALYSIS_TYPE.WEEKLY) => {
+}: AnalysisServiceDeps): AnalysisService => ({
+  generate: async (type = ANALYSIS_TYPE.WEEKLY) => {
     const systemPrompt = instructionsRepo.get(type);
     const { date, periodStart, periodEnd, today } = calculatePeriodDate(
       type,
@@ -54,7 +60,12 @@ Format: Telegram Markdown (CRITICAL - invalid markdown = message won't be delive
       mcpClient,
     });
 
-    analysisHistoryRepo.save({ date, type, analysis });
-    await telegramService.send(analysis);
+    return { date, type, analysis };
   },
+
+  save: (params) => analysisHistoryRepo.save(params),
+
+  getByDateAndType: (date, type) => analysisHistoryRepo.getByDateAndType(date, type),
+
+  getRecentByType: (type, limit) => analysisHistoryRepo.getRecentByType(type, limit),
 });

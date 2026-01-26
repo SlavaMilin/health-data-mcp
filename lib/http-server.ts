@@ -17,7 +17,7 @@ import { KEYV_NAMESPACE, KEYV_TTL } from "./constants/keyv.constants.ts";
 import { createOAuthService } from "./services/oauth.service.ts";
 import { createHealthImportService } from "./services/health-import.service.ts";
 import { createTelegramService } from "./services/telegram.service.ts";
-import { createHealthAnalysisService } from "./services/health-analysis.service.ts";
+import { createAnalysisService } from "./services/analysis.service.ts";
 import { createSchedulerService, type ScheduleConfig } from "./services/scheduler.service.ts";
 import { ANALYSIS_TYPE } from "./domain/analysis.constants.ts";
 import { runMigrations } from "./infrastructure/migrations.ts";
@@ -146,15 +146,31 @@ export const createHttpServer = async () => {
 
   const healthImportService = createHealthImportService(healthDataRepo, fastify.log);
   const telegramService = createTelegramService(telegramClient);
-  const healthAnalysisService = createHealthAnalysisService({
+  const analysisService = createAnalysisService({
     geminiClient,
-    telegramService,
-    analysisHistoryRepo,
     instructionsRepo,
+    analysisHistoryRepo,
     mcpClient,
     timezone: config.schedule.timezone,
   });
 
+  // ============================================================================
+  // 10. Create Handlers
+  // ============================================================================
+  const mcpTransportHandler = createMcpTransportHandler(transportsRepo, fastify.log);
+  const oauthHandler = createOAuthHandler({
+    oauthService,
+    baseUrl: config.baseUrl,
+  });
+  const healthImportHandler = createHealthImportHandler(healthImportService);
+  const analysisHandler = createAnalysisHandler({
+    analysisService,
+    telegramService,
+  });
+
+  // ============================================================================
+  // 11. Create Scheduler
+  // ============================================================================
   const schedules: ScheduleConfig[] = [];
   if (config.schedule.dailyTime) {
     const cron = timeToDailyCron(config.schedule.dailyTime);
@@ -193,35 +209,24 @@ export const createHttpServer = async () => {
   const scheduler = createSchedulerService({
     schedules,
     timezone: config.schedule.timezone,
-    runAnalysis: (type) => healthAnalysisService.run(type),
+    runAnalysis: (type) => analysisHandler.runAnalysis(type),
     logger: fromFastifyLogger(fastify.log),
   });
 
   // ============================================================================
-  // 10. Create Handlers
-  // ============================================================================
-  const mcpTransportHandler = createMcpTransportHandler(transportsRepo, fastify.log);
-  const oauthHandler = createOAuthHandler({
-    oauthService,
-    baseUrl: config.baseUrl,
-  });
-  const healthImportHandler = createHealthImportHandler(healthImportService);
-  const analysisHandler = createAnalysisHandler(healthAnalysisService);
-
-  // ============================================================================
-  // 11. Register Plugins
+  // 12. Register Plugins
   // ============================================================================
   await fastify.register(cors);
   await fastify.register(formbody);
 
   // ============================================================================
-  // 12. Register Middleware
+  // 13. Register Middleware
   // ============================================================================
   fastify.addHook("preHandler", createMcpOAuthMiddleware(oauthTokensRepo));
   fastify.addHook("preHandler", createAuthMiddleware(config));
 
   // ============================================================================
-  // 13. Register Routes
+  // 14. Register Routes
   // ============================================================================
   registerHealthRoutes(fastify);
   registerMcpRoutes(fastify, mcpTransportHandler);
@@ -232,7 +237,7 @@ export const createHttpServer = async () => {
   registerAnalysisRoutes(fastify, analysisHandler);
 
   // ============================================================================
-  // 14. Graceful Shutdown Handler
+  // 15. Graceful Shutdown Handler
   // ============================================================================
   process.on("SIGINT", async () => {
     console.log("\nShutting down gracefully...");
@@ -255,7 +260,7 @@ export const createHttpServer = async () => {
   });
 
   // ============================================================================
-  // 15. Start Scheduler & Server
+  // 16. Start Scheduler & Server
   // ============================================================================
   if (schedules.length > 0) {
     scheduler.start();

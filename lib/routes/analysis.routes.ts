@@ -5,5 +5,5 @@ export const registerAnalysisRoutes = (
   fastify: FastifyInstance,
   analysisHandler: AnalysisHandler
 ) => {
-  fastify.post("/api/run-analysis", analysisHandler.runAnalysis);
+  fastify.post("/api/run-analysis", analysisHandler.handleRunAnalysis);
 };

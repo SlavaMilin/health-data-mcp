@@ -197,18 +197,19 @@ Architecture:
 ```
 Scheduler (cron) / HTTP endpoint
         ↓
-health-analysis.service.ts
+analysis.handler.ts (coordinates: generate → save → send)
         ↓
-┌───────┴───────┐
-↓               ↓
-Gemini API      Telegram API
-(via MCP)       (send message)
+┌───────┼───────┐
+↓       ↓       ↓
+analysis.service  telegram.service
+(generate, save)  (send message)
 ```
 
 Key components:
+- `analysis.handler.ts` - Coordinates flow: generate → save → send
+- `analysis.service.ts` - Generate analysis (Gemini) + history operations (save/get)
+- `telegram.service.ts` - Send messages via Telegram Bot API
 - `gemini.client.ts` - Gemini API with MCP tool support (`mcpToTool`)
-- `telegram.client.ts` - Telegram Bot API client
-- `health-analysis.service.ts` - Orchestration (AI analysis → save → send)
 - `scheduler.service.ts` - node-cron wrapper for multiple schedules
 - `instructions/daily.md` - System prompt for daily analysis
 - `instructions/weekly.md` - System prompt for weekly analysis (also used for monthly)
