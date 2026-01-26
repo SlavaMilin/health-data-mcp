@@ -12,5 +12,5 @@ node_modules
 .env.test
 .env.production
 data/
-deploy.sh
+deploy/.env
 .mcp.json
