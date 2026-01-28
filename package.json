@@ -10,6 +10,7 @@
     "start:stdio": "tsx bin/stdio.ts",
     "start:server": "tsx bin/server.ts",
     "dev": "tsx --watch bin/server.ts",
+    "dev:ui": "pnpx serve public",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run",
